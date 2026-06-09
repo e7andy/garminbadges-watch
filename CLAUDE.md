@@ -48,7 +48,7 @@ Output goes to `bin/GarminBadges.prg` (ignored by `.gitignore`).
 & "$SDK\bin\monkeydo.bat" bin\GarminBadges.prg fenix7
 ```
 
-Set `ApiKey` in the simulator via File → Settings. The app shows an error message until a key is provided.
+Set `ApiKey` in the simulator via **File → Edit Persistent Storage → Edit Application.Properties data**. The app shows an error message until a key is provided.
 
 ## Key gotchas
 

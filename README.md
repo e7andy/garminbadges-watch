@@ -46,7 +46,7 @@ $SDK = "C:\Users\<you>\AppData\Roaming\Garmin\ConnectIQ\Sdks\<sdk-version>"
 & "$SDK\bin\monkeydo.bat" bin\GarminBadges.prg fenix7
 ```
 
-The app will show "Open Garmin Connect app to set API key" until you set the `ApiKey` property in the simulator's **Settings** panel (File → Settings).
+The app will show "Open Garmin Connect app to set API key" until you set the `ApiKey` property via **File → Edit Persistent Storage → Edit Application.Properties data**.
 
 ### API endpoint
 
