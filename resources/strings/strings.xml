@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<strings>
+  <string id="AppName">Garmin Badges</string>
+  <string id="ApiKeyTitle">API Key</string>
+  <string id="ApiUrlTitle">API URL</string>
+</strings>
