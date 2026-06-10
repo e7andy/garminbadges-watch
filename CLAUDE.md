@@ -63,17 +63,22 @@ Set `ApiKey` in the simulator via **File → Edit Persistent Storage → Edit Ap
 Response shape:
 ```json
 {
-  "upcoming_badges": [
+  "challenges": [
     { "name": "Challenge Name", "progress_value": 7, "target_value": 10, "unit_key": "km" }
+  ],
+  "upcoming": [
+    { "name": "New Challenge", "days_until": 3 }
   ]
 }
 ```
 
-`upcoming_badges` is up to 3 in-progress badges (earned_date IS NULL) sorted by `progress_value / target_value` descending. Empty array if there are no in-progress challenges.
+`challenges` is up to 3 in-progress badges (earned_date IS NULL) sorted by `progress_value / target_value` descending. `upcoming` is up to 2 badges with `start_date` in the next 7 days, sorted by `start_date` ascending. Either array may be empty.
+
+The view shows "UPCOMING" at the top only when `upcoming` is non-empty, in which case `challenges` is limited to 2 rows on screen instead of 3 (to fit both sections on a round face).
 
 ## Adding new screens / data
 
 1. Add fields to `GarminBadgesView.mc` and populate them in `onReceive()`.
 2. Add drawing calls in `onUpdate()` — use proportional `h * 0.xx` y-coordinates.
 3. If the API response needs new fields, update `WatchController.php` in the backend repo.
-4. If adding a new setting, update both `properties.xml` (value) and `settings.xml` (UI label).
+4. If adding a new setting, update `resources/properties.xml`.

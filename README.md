@@ -4,7 +4,8 @@ A Garmin Connect IQ watch app that shows your [GarminBadges](https://garminbadge
 
 ## What it shows
 
-- **Upcoming badges** — your in-progress challenges (up to 3), sorted by completion percentage, each with a progress bar and fraction (e.g. `7/10 km`)
+- **Upcoming** — badges/challenges starting within the next 7 days (shown only when there are any)
+- **Challenges** — your in-progress challenges (up to 3, or 2 when an Upcoming section is shown), sorted by completion percentage, each with a progress bar and fraction (e.g. `7/10 km`)
 
 Data is fetched live from the GarminBadges API using your account's API key. Press the SELECT button to refresh.
 
