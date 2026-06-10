@@ -61,6 +61,8 @@ Since the app defines a glance (`getGlanceView()`), the simulator opens directly
 4. Eject/disconnect — the watch shows "Installing..." then the app appears in the apps list.
 5. To add it to the glance loop, hold the menu button on the app in the apps list and choose "Add to Glances" (wording varies by device), then swipe up from the watch face.
 
+**Settings on a real device**: Garmin Connect Mobile's Apps → Garmin Badges → Settings screen pulls the settings schema (`ApiKey`/`ApiUrl`/`MaxDurationDays`) from Garmin's Connect IQ Store backend, keyed by the app ID in `manifest.xml`. A sideloaded `.prg` has no schema registered there, so it shows "No Settings" and there's no on-watch way to edit `Application.Properties`. Until the app is registered/uploaded in the Connect IQ Developer Portal, the only way to test on a real device is to **temporarily hardcode your API key as the default value of `ApiKey` in `resources/properties.xml`**, build, and sideload — then revert it back to an empty string before committing.
+
 ## Key gotchas
 
 - **Manifest `type`** must be `watch-app` (hyphenated), not `watchApp`. The SDK's `projectInfo.xml` is authoritative.

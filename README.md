@@ -56,6 +56,8 @@ Since the app defines a glance (`getGlanceView()`), the simulator opens directly
 4. Safely eject/disconnect the watch — it'll briefly show "Installing...", then the app appears in your apps list.
 5. To see the glance, hold the menu button on the app in the apps list and look for "Add to Glances" (wording varies by device), then swipe up from the watch face to find it in the glance loop.
 
+**Note on settings:** Garmin Connect Mobile's Apps → Garmin Badges → Settings screen only works for apps registered in the Connect IQ Developer Portal — a sideloaded `.prg` shows "No Settings" with no on-watch way to enter your API key. To test on a real device, temporarily set your API key as the default value of `ApiKey` in `resources/properties.xml` before building, and revert it afterwards.
+
 ### API endpoint
 
 The watch app calls `GET /api/watch` on the GarminBadges backend, authenticated with the user's `api_key` as a Bearer token. The backend source lives in the [garminbadges](https://github.com/andersvan/garminbadges) repo at `backend/app/Http/Controllers/Api/WatchController.php`.
