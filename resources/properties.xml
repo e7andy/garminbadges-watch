@@ -3,12 +3,14 @@
   <properties>
     <property id="ApiKey" type="string"></property>
     <property id="ApiUrl" type="string">https://api.garminbadges.com/api</property>
+    <property id="MaxDurationDays" type="number">0</property>
   </properties>
 
   <strings>
     <string id="AppName">Garmin Badges</string>
     <string id="ApiKeyTitle">API Key</string>
     <string id="ApiUrlTitle">API URL</string>
+    <string id="MaxDurationDaysTitle">Max Duration (days, 0 = no limit)</string>
   </strings>
 
   <settings>
@@ -17,6 +19,9 @@
     </setting>
     <setting propertyKey="@Properties.ApiUrl" title="@Strings.ApiUrlTitle">
       <settingConfig type="alphaNumeric"/>
+    </setting>
+    <setting propertyKey="@Properties.MaxDurationDays" title="@Strings.MaxDurationDaysTitle">
+      <settingConfig type="numeric" min="0" max="365"/>
     </setting>
   </settings>
 

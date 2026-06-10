@@ -82,16 +82,21 @@ class GarminBadgesView extends WatchUi.View {
         if (responseCode == 200 && data instanceof Lang.Dictionary) {
             var d = data as Lang.Dictionary;
 
+            var maxDuration = Application.Properties.getValue("MaxDurationDays") as Lang.Number?;
+            if (maxDuration == null) {
+                maxDuration = 0;
+            }
+
             var ch = d.get("challenges");
             if (ch instanceof Lang.Array) {
-                _challenges = ch as Lang.Array<Lang.Dictionary>;
+                _challenges = filterByDuration(ch as Lang.Array<Lang.Dictionary>, maxDuration);
             } else {
                 _challenges = [];
             }
 
             var up = d.get("upcoming");
             if (up instanceof Lang.Array) {
-                _upcoming = up as Lang.Array<Lang.Dictionary>;
+                _upcoming = filterByDuration(up as Lang.Array<Lang.Dictionary>, maxDuration);
             } else {
                 _upcoming = [];
             }
@@ -348,6 +353,25 @@ class GarminBadgesView extends WatchUi.View {
             return s.substring(0, maxLen - 1) + "~";
         }
         return s;
+    }
+
+    // Drops items whose "duration_days" exceeds maxDays. maxDays <= 0 means
+    // no limit (everything is kept).
+    private function filterByDuration(items as Lang.Array<Lang.Dictionary>, maxDays as Lang.Number) as Lang.Array<Lang.Dictionary> {
+        if (maxDays <= 0) {
+            return items;
+        }
+
+        var result = [] as Lang.Array<Lang.Dictionary>;
+        for (var i = 0; i < items.size(); i += 1) {
+            var item = items[i] as Lang.Dictionary;
+            var duration = item.get("duration_days");
+            var durationVal = (duration != null) ? duration as Lang.Number : 0;
+            if (durationVal <= maxDays) {
+                result.add(item);
+            }
+        }
+        return result;
     }
 
     // JSON numbers without a fractional part decode as Lang.Number, and some
