@@ -12,6 +12,11 @@ class GarminBadgesView extends WatchUi.View {
     private var _challenges as Lang.Array<Lang.Dictionary> = [];
     private var _upcoming   as Lang.Array<Lang.Dictionary> = [];
 
+    private var _scrollOffset as Lang.Number = 0;
+    private var _maxScroll    as Lang.Number = 0;
+
+    private const ROW_HEIGHT_FRAC = 0.255;
+
     private const RED  = 0xe53935;
     private const GRAY = 0x888888;
     private const DIM  = 0x444444;
@@ -25,6 +30,17 @@ class GarminBadgesView extends WatchUi.View {
 
     function onShow() as Void {
         fetchData();
+    }
+
+    function scrollBy(deltaPx as Lang.Number) as Void {
+        _scrollOffset += deltaPx;
+        if (_scrollOffset < 0) {
+            _scrollOffset = 0;
+        }
+        if (_scrollOffset > _maxScroll) {
+            _scrollOffset = _maxScroll;
+        }
+        WatchUi.requestUpdate();
     }
 
     function fetchData() as Void {
@@ -78,6 +94,7 @@ class GarminBadgesView extends WatchUi.View {
                 _upcoming = [];
             }
 
+            _scrollOffset = 0;
             _error = "";
 
         } else if (responseCode == 401) {
@@ -115,11 +132,9 @@ class GarminBadgesView extends WatchUi.View {
 
         var justify = Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER;
 
-        var titleY     = 0.08;
-        var dividerY   = 0.16;
-        var rowStart   = 0.22;
-        var rowHeight  = 0.255;
-        var maxRows    = 3;
+        var titleY   = 0.08;
+        var dividerY = 0.16;
+        var rowStart = 0.22;
 
         var upcomingCount = _upcoming.size();
         if (upcomingCount > 2) {
@@ -153,16 +168,14 @@ class GarminBadgesView extends WatchUi.View {
             dc.drawLine((w * 0.15).toNumber(), (h * (afterUpcomingY + 0.02)).toNumber(),
                         (w * 0.85).toNumber(), (h * (afterUpcomingY + 0.02)).toNumber());
 
-            titleY    = afterUpcomingY + 0.07;
-            dividerY  = afterUpcomingY + 0.13;
-            rowStart  = afterUpcomingY + 0.19;
-            maxRows   = 2;
-            rowHeight = (1.0 - rowStart) / maxRows;
+            titleY   = afterUpcomingY + 0.07;
+            dividerY = afterUpcomingY + 0.13;
+            rowStart = afterUpcomingY + 0.19;
         }
 
         // "Challenges" title
         dc.setColor(RED, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, (h * titleY + 0.5).toNumber(), Graphics.FONT_TINY,
+        dc.drawText(cx, (h * titleY + 0.5).toNumber(), Graphics.FONT_XTINY,
             "CHALLENGES", justify);
 
         // Divider
@@ -170,11 +183,13 @@ class GarminBadgesView extends WatchUi.View {
         dc.drawLine((w * 0.15).toNumber(), (h * dividerY).toNumber(),
                     (w * 0.85).toNumber(), (h * dividerY).toNumber());
 
+        var viewportTop    = (h * rowStart).toNumber();
+        var viewportHeight = h - viewportTop;
+
         if (_challenges.size() == 0) {
             var emptyFont = (upcomingCount > 0) ? Graphics.FONT_XTINY : Graphics.FONT_SMALL;
-            var emptyY    = rowStart + (maxRows * rowHeight) / 2;
             dc.setColor(GRAY, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(cx, (h * emptyY + 0.5).toNumber(), emptyFont,
+            dc.drawText(cx, viewportTop + viewportHeight / 2, emptyFont,
                 "No challenges\nin progress", justify);
             return;
         }
@@ -184,10 +199,19 @@ class GarminBadgesView extends WatchUi.View {
         var barWidth  = barRight - barLeft;
         var barHeight = (h * 0.035 + 0.5).toNumber();
 
-        var count = _challenges.size();
-        if (count > maxRows) {
-            count = maxRows;
+        var count        = _challenges.size();
+        var rowHeightPx  = (h * ROW_HEIGHT_FRAC).toNumber();
+        var contentHeight = count * rowHeightPx;
+
+        _maxScroll = contentHeight - viewportHeight;
+        if (_maxScroll < 0) {
+            _maxScroll = 0;
         }
+        if (_scrollOffset > _maxScroll) {
+            _scrollOffset = _maxScroll;
+        }
+
+        dc.setClip(0, viewportTop, w, viewportHeight);
 
         for (var i = 0; i < count; i += 1) {
             var badge = _challenges[i] as Lang.Dictionary;
@@ -211,7 +235,12 @@ class GarminBadgesView extends WatchUi.View {
                 ratio = 0.0;
             }
 
-            var rowTop = h * rowStart + i * h * rowHeight;
+            var rowTop = viewportTop + i * rowHeightPx - _scrollOffset;
+
+            // Skip rows fully outside the viewport
+            if (rowTop + rowHeightPx <= viewportTop || rowTop >= viewportTop + viewportHeight) {
+                continue;
+            }
 
             // Badge name
             dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
@@ -238,6 +267,21 @@ class GarminBadgesView extends WatchUi.View {
             }
             dc.drawText(cx, (rowTop + h * 0.18 + 0.5).toNumber(), Graphics.FONT_XTINY,
                 fractionText, justify);
+        }
+
+        dc.clearClip();
+
+        // Scroll indicator
+        if (_maxScroll > 0) {
+            var trackX      = (w * 0.965).toNumber();
+            var thumbHeight = (viewportHeight.toFloat() * viewportHeight / contentHeight).toNumber();
+            if (thumbHeight < (h * 0.04).toNumber()) {
+                thumbHeight = (h * 0.04).toNumber();
+            }
+            var thumbY = viewportTop + (((viewportHeight - thumbHeight).toFloat() * _scrollOffset / _maxScroll)).toNumber();
+
+            dc.setColor(DIM, Graphics.COLOR_TRANSPARENT);
+            dc.fillRoundedRectangle(trackX, thumbY, (w * 0.015 + 0.5).toNumber(), thumbHeight, 2);
         }
     }
 

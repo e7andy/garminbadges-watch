@@ -16,8 +16,8 @@ garminbadges-watch/
 ├── jungle.xml                    # Build config (source/resource paths)
 ├── source/
 │   ├── GarminBadgesApp.mc        # AppBase entry point; creates view + delegate
-│   ├── GarminBadgesView.mc       # All UI rendering (programmatic via dc.draw*) + HTTP fetch
-│   └── GarminBadgesDelegate.mc   # BehaviorDelegate; SELECT button triggers refresh
+│   ├── GarminBadgesView.mc       # All UI rendering (programmatic via dc.draw*) + HTTP fetch + scroll state
+│   └── GarminBadgesDelegate.mc   # BehaviorDelegate; SELECT = refresh, UP/DOWN/swipe = scroll challenges list
 └── resources/
     ├── drawables/
     │   ├── drawables.xml
@@ -53,6 +53,7 @@ Set `ApiKey` in the simulator via **File → Edit Persistent Storage → Edit Ap
 - **`onReceive` callback** type signature must exactly match `Lang.Dictionary or Lang.String or PersistedContent.Iterator or Null` — the generic `Lang.Object?` is rejected by the type checker.
 - **`Communications` permission** covers HTTP; there is no separate `InternetConnection` permission.
 - **No layout XML** — all drawing is programmatic in `onUpdate()` using `dc.drawText()` / `dc.drawLine()`. Coordinates use fractional screen height (e.g. `h * 0.31`) to scale across device sizes.
+- **Scrolling** — the challenges list is clipped with `dc.setClip()`/`dc.clearClip()` and offset by `_scrollOffset` (pixels). `_maxScroll` is recomputed each `onUpdate()` from row count vs. viewport height. The delegate's `onNextPage()`/`onPreviousPage()` (UP/DOWN buttons) and `onSwipe()` (touch) call `view.scrollBy()`.
 - **`$message` is reserved in Monkey C** if using Monkey C templates — use a different variable name.
 - **Developer key** is at `C:\Users\e7and\My Drive\Backup\garmin\developer_key`.
 
@@ -72,9 +73,9 @@ Response shape:
 }
 ```
 
-`challenges` is up to 3 in-progress badges (earned_date IS NULL) sorted by `progress_value / target_value` descending. `upcoming` is up to 2 badges with `start_date` in the next 7 days, sorted by `start_date` ascending. Either array may be empty.
+`challenges` is up to 5 in-progress, time-limited badges (earned_date IS NULL, with both `start_date` and `end_date` set), sorted descending by "days behind schedule" — `(elapsed_fraction - progress_fraction) * total_days` of the challenge window. `upcoming` is up to 2 badges with `start_date` in the next 7 days, sorted by `start_date` ascending. Either array may be empty.
 
-The view shows "UPCOMING" at the top only when `upcoming` is non-empty, in which case `challenges` is limited to 2 rows on screen instead of 3 (to fit both sections on a round face).
+The view shows "UPCOMING" at the top only when `upcoming` is non-empty. The `challenges` list is scrollable (UP/DOWN buttons or swipe) when more rows exist than fit on screen.
 
 ## Adding new screens / data
 

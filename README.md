@@ -5,7 +5,7 @@ A Garmin Connect IQ watch app that shows your [GarminBadges](https://garminbadge
 ## What it shows
 
 - **Upcoming** — badges/challenges starting within the next 7 days (shown only when there are any)
-- **Challenges** — your in-progress challenges (up to 3, or 2 when an Upcoming section is shown), sorted by completion percentage, each with a progress bar and fraction (e.g. `7/10 km`)
+- **Challenges** — your 5 most urgent in-progress challenges, ranked by how many days behind schedule you are, each with a progress bar and fraction (e.g. `7/10 km`). Scroll with the UP/DOWN buttons or a swipe if there are more than fit on screen.
 
 Data is fetched live from the GarminBadges API using your account's API key. Press the SELECT button to refresh.
 
@@ -58,8 +58,8 @@ garminbadges-watch/
 ├── jungle.xml                          # Build config
 ├── source/
 │   ├── GarminBadgesApp.mc              # Entry point (AppBase)
-│   ├── GarminBadgesView.mc             # UI rendering + API fetch
-│   └── GarminBadgesDelegate.mc         # Input handling (SELECT = refresh)
+│   ├── GarminBadgesView.mc             # UI rendering + API fetch + scroll state
+│   └── GarminBadgesDelegate.mc         # Input handling (SELECT = refresh, UP/DOWN/swipe = scroll)
 └── resources/
     ├── drawables/                      # Launcher icon
     └── properties.xml                  # App properties + settings UI (ApiKey, ApiUrl)
