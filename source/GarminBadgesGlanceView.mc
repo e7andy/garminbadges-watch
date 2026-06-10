@@ -16,15 +16,10 @@ class GarminBadgesGlanceView extends WatchUi.GlanceView {
     private var _behind    as Lang.Number  = 0;
     private var _hasTarget as Lang.Boolean = false;
     private var _ratio     as Lang.Float   = 0.0;
-    private var _barColor  as Lang.Number  = 0xe53935;
+    private var _barColor  as Lang.Number  = BadgeFormat.RED;
 
     private var _scrollX as Lang.Number = 0;
     private var _timer   as Timer.Timer?;
-
-    private const RED   = 0xe53935;
-    private const GREEN = 0x43a047;
-    private const GRAY  = 0x888888;
-    private const DIM   = 0x444444;
 
     private const SCROLL_STEP_PX = 6;
     private const SCROLL_GAP_PX  = 30;
@@ -115,17 +110,32 @@ class GarminBadgesGlanceView extends WatchUi.GlanceView {
             if (upcoming.size() > 0) {
                 var u = upcoming[0] as Lang.Dictionary;
                 var name = u.get("name");
-                _title     = (name != null) ? name as Lang.String : "";
+                var nameStr = (name != null) ? name as Lang.String : "";
+
+                var daysUntil = u.get("days_until");
+                var daysUntilVal = (daysUntil != null) ? daysUntil as Lang.Number : 0;
+
+                _title     = nameStr + " " + BadgeFormat.formatDaysUntil(daysUntilVal);
                 _hasTarget = false;
                 _ratio     = 0.0;
             } else if (challenges.size() > 0) {
                 var c = challenges[0] as Lang.Dictionary;
                 var name = c.get("name");
-                _title = (name != null) ? name as Lang.String : "";
+                var nameStr = (name != null) ? name as Lang.String : "";
 
-                var targetVal = toFloatVal(c.get("target_value"), 0.0);
+                var started = c.get("started");
+                var startedVal = (started == null) || (started as Lang.Boolean);
+                if (!startedVal) {
+                    var daysUntilStart = c.get("days_until_start");
+                    var daysUntilStartVal = (daysUntilStart != null) ? daysUntilStart as Lang.Number : 0;
+                    nameStr += " " + BadgeFormat.formatDaysUntil(daysUntilStartVal);
+                }
+
+                _title = nameStr;
+
+                var targetVal = BadgeFormat.toFloatVal(c.get("target_value"), 0.0);
                 if (targetVal > 0) {
-                    var progressVal = toFloatVal(c.get("progress_value"), 0.0);
+                    var progressVal = BadgeFormat.toFloatVal(c.get("progress_value"), 0.0);
                     var ratio = progressVal / targetVal;
                     if (ratio > 1.0) {
                         ratio = 1.0;
@@ -136,13 +146,13 @@ class GarminBadgesGlanceView extends WatchUi.GlanceView {
                     _hasTarget = true;
                     _ratio     = ratio;
 
-                    var daysBehindVal = toFloatVal(c.get("days_behind"), 0.0);
+                    var daysBehindVal = BadgeFormat.toFloatVal(c.get("days_behind"), 0.0);
                     if (daysBehindVal <= -0.5) {
-                        _barColor = GREEN;
+                        _barColor = BadgeFormat.GREEN;
                     } else if (daysBehindVal >= 0.5) {
-                        _barColor = RED;
+                        _barColor = BadgeFormat.RED;
                     } else {
-                        _barColor = GRAY;
+                        _barColor = BadgeFormat.GRAY;
                     }
                 } else {
                     _hasTarget = false;
@@ -215,7 +225,7 @@ class GarminBadgesGlanceView extends WatchUi.GlanceView {
         var barTop    = (h * 0.42).toNumber();
         var barHeight = (h * 0.18).toNumber();
 
-        dc.setColor(DIM, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(BadgeFormat.DIM, Graphics.COLOR_TRANSPARENT);
         dc.drawRectangle(barLeft, barTop, barWidth, barHeight);
 
         if (_hasTarget) {
@@ -230,26 +240,7 @@ class GarminBadgesGlanceView extends WatchUi.GlanceView {
         var behindY    = (h * 0.78).toNumber();
         var behindText = _behind.toString() + " behind";
 
-        dc.setColor((_behind > 0) ? RED : GRAY, Graphics.COLOR_TRANSPARENT);
+        dc.setColor((_behind > 0) ? BadgeFormat.RED : BadgeFormat.GRAY, Graphics.COLOR_TRANSPARENT);
         dc.drawText(w / 2, behindY, font, behindText, justify);
-    }
-
-    // JSON numbers without a fractional part decode as Lang.Number, and some
-    // decimals decode as Lang.Double rather than Lang.Float — convert
-    // explicitly so arithmetic doesn't truncate or fall through to default.
-    private function toFloatVal(value as Lang.Object?, defaultVal as Lang.Float) as Lang.Float {
-        if (value instanceof Lang.Float) {
-            return value as Lang.Float;
-        }
-        if (value instanceof Lang.Double) {
-            return (value as Lang.Double).toFloat();
-        }
-        if (value instanceof Lang.Number) {
-            return (value as Lang.Number).toFloat();
-        }
-        if (value instanceof Lang.Long) {
-            return (value as Lang.Long).toFloat();
-        }
-        return defaultVal;
     }
 }
