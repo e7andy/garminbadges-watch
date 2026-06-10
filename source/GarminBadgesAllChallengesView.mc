@@ -100,16 +100,20 @@ class GarminBadgesAllChallengesView extends WatchUi.View {
             var daysBehind = badge.get("days_behind");
 
             var progressVal   = toFloatVal(progress, 0.0);
-            var targetVal     = toFloatVal(target, 1.0);
+            var targetVal     = toFloatVal(target, 0.0);
             var unitStr       = (unit != null) ? unit as Lang.String : "";
             var daysBehindVal = toFloatVal(daysBehind, 0.0);
 
-            var ratio = progressVal / targetVal;
-            if (ratio > 1.0) {
-                ratio = 1.0;
-            }
-            if (ratio < 0.0) {
-                ratio = 0.0;
+            var hasTarget = targetVal > 0;
+            var ratio = 0.0;
+            if (hasTarget) {
+                ratio = progressVal / targetVal;
+                if (ratio > 1.0) {
+                    ratio = 1.0;
+                }
+                if (ratio < 0.0) {
+                    ratio = 0.0;
+                }
             }
 
             var rowTop = viewportTop + i * rowHeightPx - _scrollOffset;
@@ -137,22 +141,30 @@ class GarminBadgesAllChallengesView extends WatchUi.View {
             dc.drawText(barRight, nameY, Graphics.FONT_XTINY,
                 formatDaysOffset(daysBehindVal), Graphics.TEXT_JUSTIFY_RIGHT | Graphics.TEXT_JUSTIFY_VCENTER);
 
-            // Progress bar background
-            var barTop = (rowTop + h * 0.105).toNumber();
-            dc.setColor(DIM, Graphics.COLOR_TRANSPARENT);
-            dc.drawRectangle(barLeft, barTop, barWidth, barHeight);
+            if (hasTarget) {
+                // Progress bar background
+                var barTop = (rowTop + h * 0.105).toNumber();
+                dc.setColor(DIM, Graphics.COLOR_TRANSPARENT);
+                dc.drawRectangle(barLeft, barTop, barWidth, barHeight);
 
-            // Progress bar fill
-            var fillWidth = (barWidth * ratio).toNumber();
-            if (fillWidth > 0) {
-                dc.setColor(RED, Graphics.COLOR_TRANSPARENT);
-                dc.fillRectangle(barLeft, barTop, fillWidth, barHeight);
+                // Progress bar fill
+                var fillWidth = (barWidth * ratio).toNumber();
+                if (fillWidth > 0) {
+                    dc.setColor(RED, Graphics.COLOR_TRANSPARENT);
+                    dc.fillRectangle(barLeft, barTop, fillWidth, barHeight);
+                }
+
+                // Fraction text
+                dc.setColor(GRAY, Graphics.COLOR_TRANSPARENT);
+                dc.drawText(cx, (rowTop + h * 0.18 + 0.5).toNumber(), Graphics.FONT_XTINY,
+                    formatFraction(progressVal, targetVal, unitStr), justify);
+            } else {
+                // No numeric target (e.g. "finish in the top 3" challenges) — just
+                // show the name/days row, no progress bar or fraction.
+                dc.setColor(GRAY, Graphics.COLOR_TRANSPARENT);
+                dc.drawText(cx, (rowTop + h * 0.18 + 0.5).toNumber(), Graphics.FONT_XTINY,
+                    "No target", justify);
             }
-
-            // Fraction text
-            dc.setColor(GRAY, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(cx, (rowTop + h * 0.18 + 0.5).toNumber(), Graphics.FONT_XTINY,
-                formatFraction(progressVal, targetVal, unitStr), justify);
         }
 
         dc.clearClip();

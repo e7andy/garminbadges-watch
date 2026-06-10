@@ -75,7 +75,9 @@ Response shape:
 }
 ```
 
-`challenges` is up to 20 in-progress, time-limited badges (earned_date IS NULL, with both `start_date` and `end_date` set). They're sorted with started badges (`progress_value > 0`) first — ranked descending by "days behind schedule", `days_behind` = `(elapsed_fraction - progress_fraction) * total_days` of the challenge window — followed by not-yet-started badges last. `upcoming` is up to 2 badges with `start_date` in the next 7 days, sorted by `start_date` ascending. Either array may be empty.
+`challenges` is up to 20 in-progress, time-limited badges (earned_date IS NULL, with both `start_date` and `end_date` set). They're sorted with started badges (`start_date <= now`) first — ranked descending by "days behind schedule", `days_behind` = `(elapsed_fraction - progress_fraction) * total_days` of the challenge window — followed by badges whose `start_date` is still in the future, last. `upcoming` is up to 2 badges with `start_date` in the next 7 days, sorted by `start_date` ascending. Either array may be empty.
+
+Some challenges (e.g. "finish in the top 3" podium challenges) have no numeric target — `target_value` is `0` and `unit_key` is `null` for these. The view skips the progress bar/fraction and shows "No target" instead.
 
 `progress_value`/`target_value` are in the badge's raw storage units (meters for `mi_km`, seconds for `seconds`) — formatting/unit conversion happens on-device in `formatFraction()`/`formatTime()`, not in the API. `days_behind` is a rounded integer; positive = behind schedule, negative = ahead, 0 = on track.
 
