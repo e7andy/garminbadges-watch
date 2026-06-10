@@ -109,7 +109,7 @@ When more than 5 challenges are returned, `GarminBadgesView` shows a "MORE" row 
 `GarminBadgesGlanceView` (registered via `GarminBadgesApp.getGlanceView()`) is the small preview shown in the watch's widget glance loop. It makes its own `/api/watch` request (same auth/fetch pattern as the main view) and shows:
 
 - **Line 1** — the title of the closest upcoming item: `upcoming[0].name` if `upcoming` is non-empty, otherwise the most urgent `challenges[0].name` (already sorted most-behind-first), otherwise "No challenges". Scrolls horizontally (marquee, via a 1Hz `Timer.Timer` started in `onShow()`/stopped in `onHide()`) if the text is wider than the glance.
-- **Middle** — a progress bar for that same item, filled by `progress_value/target_value` (clamped 0–1). Empty if the item is an upcoming badge or has no numeric target (`target_value == 0`).
+- **Middle** — a progress bar for that same item, filled by `progress_value/target_value` (clamped 0–1). Fill color follows `days_behind` like the main page's offset indicator: green if ahead (`<= -0.5`), red if behind (`>= 0.5`), gray if on track. Empty if the item is an upcoming badge or has no numeric target (`target_value == 0`).
 - **Line 2** — count of `challenges` with `days_behind > 0`, shown as "`N` behind" (red if `N > 0`, gray otherwise).
 
 Selecting/tapping the glance uses the default `GlanceViewDelegate` behavior (no custom delegate registered), which opens the app's `getInitialView()`.

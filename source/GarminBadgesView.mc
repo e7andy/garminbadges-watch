@@ -297,7 +297,7 @@ class GarminBadgesView extends WatchUi.View {
                 // Progress bar fill
                 var fillWidth = (barWidth * ratio).toNumber();
                 if (fillWidth > 0) {
-                    dc.setColor(RED, Graphics.COLOR_TRANSPARENT);
+                    dc.setColor(daysColor, Graphics.COLOR_TRANSPARENT);
                     dc.fillRectangle(barLeft, barTop, fillWidth, barHeight);
                 }
 

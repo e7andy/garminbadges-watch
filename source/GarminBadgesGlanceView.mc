@@ -16,13 +16,15 @@ class GarminBadgesGlanceView extends WatchUi.GlanceView {
     private var _behind    as Lang.Number  = 0;
     private var _hasTarget as Lang.Boolean = false;
     private var _ratio     as Lang.Float   = 0.0;
+    private var _barColor  as Lang.Number  = 0xe53935;
 
     private var _scrollX as Lang.Number = 0;
     private var _timer   as Timer.Timer?;
 
-    private const RED  = 0xe53935;
-    private const GRAY = 0x888888;
-    private const DIM  = 0x444444;
+    private const RED   = 0xe53935;
+    private const GREEN = 0x43a047;
+    private const GRAY  = 0x888888;
+    private const DIM   = 0x444444;
 
     private const SCROLL_STEP_PX = 6;
     private const SCROLL_GAP_PX  = 30;
@@ -133,6 +135,15 @@ class GarminBadgesGlanceView extends WatchUi.GlanceView {
                     }
                     _hasTarget = true;
                     _ratio     = ratio;
+
+                    var daysBehindVal = toFloatVal(c.get("days_behind"), 0.0);
+                    if (daysBehindVal <= -0.5) {
+                        _barColor = GREEN;
+                    } else if (daysBehindVal >= 0.5) {
+                        _barColor = RED;
+                    } else {
+                        _barColor = GRAY;
+                    }
                 } else {
                     _hasTarget = false;
                     _ratio     = 0.0;
@@ -210,7 +221,7 @@ class GarminBadgesGlanceView extends WatchUi.GlanceView {
         if (_hasTarget) {
             var fillWidth = (barWidth * _ratio).toNumber();
             if (fillWidth > 0) {
-                dc.setColor(RED, Graphics.COLOR_TRANSPARENT);
+                dc.setColor(_barColor, Graphics.COLOR_TRANSPARENT);
                 dc.fillRectangle(barLeft, barTop, fillWidth, barHeight);
             }
         }
