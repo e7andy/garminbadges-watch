@@ -51,6 +51,16 @@ Set `ApiKey` in the simulator via **File → Edit Persistent Storage → Edit Ap
 
 `MaxDurationDays` (numeric, 0-365, default 0) hides any challenge/upcoming badge whose `duration_days` exceeds it. `0` means no limit.
 
+Since the app defines a glance (`getGlanceView()`), the simulator opens directly to the glance preview rather than the main view. Press **Enter** (or click the screen) to invoke the default `GlanceViewDelegate` and launch the full app — this is also how it works on a real device. Pressing BACK from there exits the app in the simulator rather than returning to the glance; that's a simulator-only limitation (the glance↔app handoff is OS-managed on a real device).
+
+## Real device
+
+1. Build the `.prg` (same command as above — it's signed with the developer key).
+2. Connect the watch via USB; it mounts as a USB drive ("GARMIN").
+3. Copy `bin/GarminBadges.prg` into `GARMIN/APPS/` (create the folder if it doesn't exist).
+4. Eject/disconnect — the watch shows "Installing..." then the app appears in the apps list.
+5. To add it to the glance loop, hold the menu button on the app in the apps list and choose "Add to Glances" (wording varies by device), then swipe up from the watch face.
+
 ## Key gotchas
 
 - **Manifest `type`** must be `watch-app` (hyphenated), not `watchApp`. The SDK's `projectInfo.xml` is authoritative.

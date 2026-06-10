@@ -46,6 +46,16 @@ $SDK = "C:\Users\<you>\AppData\Roaming\Garmin\ConnectIQ\Sdks\<sdk-version>"
 
 The app will show "Open Garmin Connect app to set API key" until you set the `ApiKey` property via **File → Edit Persistent Storage → Edit Application.Properties data**.
 
+Since the app defines a glance (`getGlanceView()`), the simulator opens directly to the glance preview. Press **Enter** (or click the screen) to launch the full app, the same way selecting the glance does on a real device.
+
+### Run on a real device
+
+1. Build the `.prg` as above (it's signed with your developer key, so it's ready to sideload).
+2. Connect the watch via USB — it mounts as a USB drive (usually "GARMIN").
+3. Copy `bin/GarminBadges.prg` into the `GARMIN/APPS/` folder on the device (create it if missing).
+4. Safely eject/disconnect the watch — it'll briefly show "Installing...", then the app appears in your apps list.
+5. To see the glance, hold the menu button on the app in the apps list and look for "Add to Glances" (wording varies by device), then swipe up from the watch face to find it in the glance loop.
+
 ### API endpoint
 
 The watch app calls `GET /api/watch` on the GarminBadges backend, authenticated with the user's `api_key` as a Bearer token. The backend source lives in the [garminbadges](https://github.com/andersvan/garminbadges) repo at `backend/app/Http/Controllers/Api/WatchController.php`.
@@ -61,7 +71,8 @@ garminbadges-watch/
 │   ├── GarminBadgesView.mc                  # Main page: UI rendering + API fetch + scroll state
 │   ├── GarminBadgesDelegate.mc              # Main page input (SELECT/tap = refresh, UP/DOWN/swipe = scroll, MORE/MENU = open all-challenges page)
 │   ├── GarminBadgesAllChallengesView.mc     # Second page: all challenges, most urgent first
-│   └── GarminBadgesAllChallengesDelegate.mc # Second page input (UP/DOWN/swipe = scroll, BACK = pop)
+│   ├── GarminBadgesAllChallengesDelegate.mc # Second page input (UP/DOWN/swipe = scroll, BACK = pop)
+│   └── GarminBadgesGlanceView.mc            # Glance preview: title + progress bar + behind count
 └── resources/
     ├── drawables/                      # Launcher icon
     └── properties.xml                  # App properties + settings UI (ApiKey, ApiUrl)
