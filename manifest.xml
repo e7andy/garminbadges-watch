@@ -5,7 +5,7 @@
     name="@Strings.AppName"
     entry="GarminBadgesApp"
     launcherIcon="@Drawables.LauncherIcon"
-    minApiLevel="3.1.0">
+    minApiLevel="3.3.0">
 
     <iq:products>
       <!-- Fenix 6 -->

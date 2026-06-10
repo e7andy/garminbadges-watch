@@ -4,6 +4,7 @@ import Toybox.Graphics;
 import Toybox.Lang;
 import Toybox.PersistedContent;
 import Toybox.System;
+import Toybox.Timer;
 import Toybox.WatchUi;
 
 class GarminBadgesView extends WatchUi.View {
@@ -16,7 +17,14 @@ class GarminBadgesView extends WatchUi.View {
     private var _scrollOffset as Lang.Number = 0;
     private var _maxScroll    as Lang.Number = 0;
 
+    private var _momentumVelocity as Lang.Float = 0.0;
+    private var _momentumTimer    as Timer.Timer?;
+
     private const ROW_HEIGHT_FRAC = 0.255;
+
+    private const MOMENTUM_FRICTION     = 0.95;
+    private const MOMENTUM_MIN_VELOCITY = 10.0;
+    private const MOMENTUM_TICK_MS      = 30;
 
     private const RED   = 0xe53935;
     private const GREEN = 0x43a047;
@@ -34,7 +42,13 @@ class GarminBadgesView extends WatchUi.View {
         fetchData();
     }
 
+    function onHide() as Void {
+        stopMomentum();
+    }
+
     function scrollBy(deltaPx as Lang.Number) as Void {
+        stopMomentum();
+
         _scrollOffset += deltaPx;
         if (_scrollOffset < 0) {
             _scrollOffset = 0;
@@ -42,6 +56,51 @@ class GarminBadgesView extends WatchUi.View {
         if (_scrollOffset > _maxScroll) {
             _scrollOffset = _maxScroll;
         }
+        WatchUi.requestUpdate();
+    }
+
+    // Begin a momentum scroll after a flick release. velocityPxPerSec is
+    // signed: positive scrolls down (increases _scrollOffset).
+    function startMomentum(velocityPxPerSec as Lang.Float) as Void {
+        stopMomentum();
+
+        if (velocityPxPerSec.abs() < MOMENTUM_MIN_VELOCITY) {
+            return;
+        }
+
+        _momentumVelocity = velocityPxPerSec;
+        _momentumTimer    = new Timer.Timer();
+        _momentumTimer.start(method(:onMomentumTick), MOMENTUM_TICK_MS, true);
+    }
+
+    function stopMomentum() as Void {
+        if (_momentumTimer != null) {
+            _momentumTimer.stop();
+            _momentumTimer = null;
+        }
+        _momentumVelocity = 0.0;
+    }
+
+    function onMomentumTick() as Void {
+        var deltaPx = (_momentumVelocity * (MOMENTUM_TICK_MS / 1000.0)).toNumber();
+        _scrollOffset += deltaPx;
+
+        var hitEdge = false;
+        if (_scrollOffset < 0) {
+            _scrollOffset = 0;
+            hitEdge = true;
+        }
+        if (_scrollOffset > _maxScroll) {
+            _scrollOffset = _maxScroll;
+            hitEdge = true;
+        }
+
+        _momentumVelocity *= MOMENTUM_FRICTION;
+
+        if (hitEdge || _momentumVelocity.abs() < MOMENTUM_MIN_VELOCITY) {
+            stopMomentum();
+        }
+
         WatchUi.requestUpdate();
     }
 

@@ -70,7 +70,7 @@ Since the app defines a glance (`getGlanceView()`), the simulator opens directly
 - **`onReceive` callback** type signature must exactly match `Lang.Dictionary or Lang.String or PersistedContent.Iterator or Null` — the generic `Lang.Object?` is rejected by the type checker.
 - **`Communications` permission** covers HTTP; there is no separate `InternetConnection` permission.
 - **No layout XML** — all drawing is programmatic in `onUpdate()` using `dc.drawText()` / `dc.drawLine()`. Coordinates use fractional screen height (e.g. `h * 0.31`) to scale across device sizes.
-- **Scrolling** — the challenges list is clipped with `dc.setClip()`/`dc.clearClip()` and offset by `_scrollOffset` (pixels). `_maxScroll` is recomputed each `onUpdate()` from row count vs. viewport height. The delegate's `onNextPage()`/`onPreviousPage()` (UP/DOWN buttons) and `onSwipe()` (touch) call `view.scrollBy()`.
+- **Scrolling** — the challenges list is clipped with `dc.setClip()`/`dc.clearClip()` and offset by `_scrollOffset` (pixels). `_maxScroll` is recomputed each `onUpdate()` from row count vs. viewport height. The delegate's `onNextPage()`/`onPreviousPage()` (UP/DOWN buttons) call `view.scrollBy()`. Touch dragging uses `onDrag()` (`DragEvent`, requires `minApiLevel 3.3.0`) for 1:1 finger tracking via `view.scrollBy(-deltaY)`, and `onFlick()` (`FlickEvent`) calls `view.startMomentum(velocity)` to keep scrolling with deceleration (`onMomentumTick()`, 30ms `Timer`, 5% friction per tick, stops below 10px/s or at a list edge).
 - **`$message` is reserved in Monkey C** if using Monkey C templates — use a different variable name.
 - **Developer key** is at `C:\Users\e7and\My Drive\Backup\garmin\developer_key`.
 
