@@ -350,14 +350,21 @@ class GarminBadgesView extends WatchUi.View {
         return s;
     }
 
-    // JSON numbers without a fractional part decode as Lang.Number, not
-    // Lang.Float — convert explicitly so arithmetic doesn't truncate.
+    // JSON numbers without a fractional part decode as Lang.Number, and some
+    // decimals decode as Lang.Double rather than Lang.Float — convert
+    // explicitly so arithmetic doesn't truncate or fall through to default.
     private function toFloatVal(value as Lang.Object?, defaultVal as Lang.Float) as Lang.Float {
         if (value instanceof Lang.Float) {
             return value as Lang.Float;
         }
+        if (value instanceof Lang.Double) {
+            return (value as Lang.Double).toFloat();
+        }
         if (value instanceof Lang.Number) {
             return (value as Lang.Number).toFloat();
+        }
+        if (value instanceof Lang.Long) {
+            return (value as Lang.Long).toFloat();
         }
         return defaultVal;
     }
