@@ -15,11 +15,12 @@ garminbadges-watch/
 ├── manifest.xml                  # App metadata, type, permissions, target devices
 ├── jungle.xml                    # Build config (source/resource paths)
 ├── source/
-│   ├── GarminBadgesApp.mc                  # AppBase entry point; creates view + delegate
+│   ├── GarminBadgesApp.mc                  # AppBase entry point; creates view + delegate, getGlanceView() for the glance
 │   ├── GarminBadgesView.mc                 # Main page: UI rendering (programmatic via dc.draw*) + HTTP fetch + scroll state
 │   ├── GarminBadgesDelegate.mc             # BehaviorDelegate for main page; SELECT/tap = refresh, UP/DOWN/swipe = scroll, tap MORE / MENU = open all-challenges page
 │   ├── GarminBadgesAllChallengesView.mc    # Second page: all challenges sorted most-urgent first, scrollable
-│   └── GarminBadgesAllChallengesDelegate.mc # BehaviorDelegate for the all-challenges page; UP/DOWN/swipe = scroll, BACK = pop
+│   ├── GarminBadgesAllChallengesDelegate.mc # BehaviorDelegate for the all-challenges page; UP/DOWN/swipe = scroll, BACK = pop
+│   └── GarminBadgesGlanceView.mc           # Glance widget preview: title + progress bar + "behind" count
 └── resources/
     ├── drawables/
     │   ├── drawables.xml
@@ -92,6 +93,16 @@ The view shows "UPCOMING" at the top only when `upcoming` is non-empty. The main
 ## All-challenges page
 
 When more than 5 challenges are returned, `GarminBadgesView` shows a "MORE" row after the 5th challenge. Scrolling down to that row and pressing SELECT/tapping (`atMoreRow()` is true), or pressing MENU from the main page (when `hasMoreChallenges()` is true), pushes `GarminBadgesAllChallengesView` via `WatchUi.pushView()` — it lists *all* challenges from the same response, in the same sorted order, using the same row layout/scrolling as the main page. BACK pops back to the main page (default `BehaviorDelegate` behavior).
+
+## Glance
+
+`GarminBadgesGlanceView` (registered via `GarminBadgesApp.getGlanceView()`) is the small preview shown in the watch's widget glance loop. It makes its own `/api/watch` request (same auth/fetch pattern as the main view) and shows:
+
+- **Line 1** — the title of the closest upcoming item: `upcoming[0].name` if `upcoming` is non-empty, otherwise the most urgent `challenges[0].name` (already sorted most-behind-first), otherwise "No challenges". Scrolls horizontally (marquee, via a 1Hz `Timer.Timer` started in `onShow()`/stopped in `onHide()`) if the text is wider than the glance.
+- **Middle** — a progress bar for that same item, filled by `progress_value/target_value` (clamped 0–1). Empty if the item is an upcoming badge or has no numeric target (`target_value == 0`).
+- **Line 2** — count of `challenges` with `days_behind > 0`, shown as "`N` behind" (red if `N > 0`, gray otherwise).
+
+Selecting/tapping the glance uses the default `GlanceViewDelegate` behavior (no custom delegate registered), which opens the app's `getInitialView()`.
 
 ## Unit formatting
 
