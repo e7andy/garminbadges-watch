@@ -192,7 +192,7 @@ class GarminBadgesAllChallengesView extends WatchUi.View {
 
     // Positive = behind schedule ("+Nd"), negative = ahead ("-Nd"), 0 = on track.
     private function formatDaysOffset(daysBehind as Lang.Float) as Lang.String {
-        var rounded = daysBehind.toNumber();
+        var rounded = -daysBehind.toNumber();
         if (rounded > 0) {
             return "+" + rounded.toString() + "d";
         }
