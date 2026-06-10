@@ -3,6 +3,7 @@ import Toybox.Communications;
 import Toybox.Graphics;
 import Toybox.Lang;
 import Toybox.PersistedContent;
+import Toybox.System;
 import Toybox.WatchUi;
 
 class GarminBadgesView extends WatchUi.View {
@@ -261,12 +262,8 @@ class GarminBadgesView extends WatchUi.View {
 
             // Fraction text
             dc.setColor(GRAY, Graphics.COLOR_TRANSPARENT);
-            var fractionText = formatNum(progressVal) + "/" + formatNum(targetVal);
-            if (!unitStr.equals("")) {
-                fractionText += " " + unitStr;
-            }
             dc.drawText(cx, (rowTop + h * 0.18 + 0.5).toNumber(), Graphics.FONT_XTINY,
-                fractionText, justify);
+                formatFraction(progressVal, targetVal, unitStr), justify);
         }
 
         dc.clearClip();
@@ -297,5 +294,52 @@ class GarminBadgesView extends WatchUi.View {
             return value.toNumber().toString();
         }
         return value.format("%.1f");
+    }
+
+    // progressVal/targetVal are in the badge's raw storage units (meters for
+    // mi_km, seconds for seconds) and formatted per-unit for display.
+    private function formatFraction(progressVal as Lang.Float, targetVal as Lang.Float, unitStr as Lang.String) as Lang.String {
+        if (unitStr.equals("mi_km")) {
+            var statute = (System.getDeviceSettings().distanceUnits == System.UNIT_STATUTE);
+            var factor  = statute ? 0.000621371 : 0.001;
+            var label   = statute ? "mi" : "km";
+            return formatNum(progressVal * factor) + "/" + formatNum(targetVal * factor) + " " + label;
+        }
+
+        if (unitStr.equals("ft_m")) {
+            var statute = (System.getDeviceSettings().distanceUnits == System.UNIT_STATUTE);
+            var factor  = statute ? 3.28084 : 1.0;
+            var label   = statute ? "ft" : "m";
+            return formatNum(progressVal * factor) + "/" + formatNum(targetVal * factor) + " " + label;
+        }
+
+        if (unitStr.equals("seconds")) {
+            return formatTime(progressVal) + "/" + formatTime(targetVal);
+        }
+
+        if (unitStr.equals("kilocalories")) {
+            return formatNum(progressVal) + "/" + formatNum(targetVal) + " kcal";
+        }
+
+        var text = formatNum(progressVal) + "/" + formatNum(targetVal);
+        if (!unitStr.equals("")) {
+            text += " " + unitStr;
+        }
+        return text;
+    }
+
+    // Whole hours show as "Nh"; otherwise "hh:mm:ss"
+    private function formatTime(seconds as Lang.Float) as Lang.String {
+        var total = seconds.toNumber();
+
+        if (total % 3600 == 0) {
+            return (total / 3600).toString() + "h";
+        }
+
+        var h = total / 3600;
+        var m = (total % 3600) / 60;
+        var s = total % 60;
+
+        return h.format("%02d") + ":" + m.format("%02d") + ":" + s.format("%02d");
     }
 }

@@ -65,7 +65,7 @@ Response shape:
 ```json
 {
   "challenges": [
-    { "name": "Challenge Name", "progress_value": 7, "target_value": 10, "unit_key": "km" }
+    { "name": "Challenge Name", "progress_value": 7000, "target_value": 10000, "unit_key": "mi_km" }
   ],
   "upcoming": [
     { "name": "New Challenge", "days_until": 3 }
@@ -75,7 +75,19 @@ Response shape:
 
 `challenges` is up to 5 in-progress, time-limited badges (earned_date IS NULL, with both `start_date` and `end_date` set), sorted descending by "days behind schedule" — `(elapsed_fraction - progress_fraction) * total_days` of the challenge window. `upcoming` is up to 2 badges with `start_date` in the next 7 days, sorted by `start_date` ascending. Either array may be empty.
 
+`progress_value`/`target_value` are in the badge's raw storage units (meters for `mi_km`, seconds for `seconds`) — formatting/unit conversion happens on-device in `formatFraction()`/`formatTime()`, not in the API.
+
 The view shows "UPCOMING" at the top only when `upcoming` is non-empty. The `challenges` list is scrollable (UP/DOWN buttons or swipe) when more rows exist than fit on screen.
+
+## Unit formatting
+
+`formatFraction()` in `GarminBadgesView.mc` formats `progress_value/target_value` per `unit_key`:
+
+- **`mi_km`** — raw value is meters. Shown as km by default; converted to miles if `System.getDeviceSettings().distanceUnits == System.UNIT_STATUTE`.
+- **`ft_m`** — raw value is meters. Shown as m by default; converted to feet if `System.getDeviceSettings().distanceUnits == System.UNIT_STATUTE`.
+- **`seconds`** — whole hours show as `Nh`; otherwise `hh:mm:ss`.
+- **`kilocalories`** — shown as `value/target kcal`.
+- All other units — `value/target unit_key`.
 
 ## Adding new screens / data
 
