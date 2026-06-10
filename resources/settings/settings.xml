@@ -1,9 +1,0 @@
-<?xml version="1.0"?>
-<settings>
-  <setting propertyKey="@Properties.ApiKey" title="@Strings.ApiKeyTitle">
-    <settingConfig type="alphanumeric"/>
-  </setting>
-  <setting propertyKey="@Properties.ApiUrl" title="@Strings.ApiUrlTitle">
-    <settingConfig type="alphanumeric"/>
-  </setting>
-</settings>

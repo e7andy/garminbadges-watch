@@ -1,5 +1,0 @@
-<?xml version="1.0"?>
-<properties xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://developer.garmin.com/downloads/connect-iq/resources.xsd">
-  <property id="ApiKey" type="string"></property>
-  <property id="ApiUrl" type="string">https://api.garminbadges.com/api</property>
-</properties>

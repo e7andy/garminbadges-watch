@@ -1,0 +1,23 @@
+<resources xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://developer.garmin.com/downloads/connect-iq/resources.xsd">
+
+  <properties>
+    <property id="ApiKey" type="string"></property>
+    <property id="ApiUrl" type="string">https://api.garminbadges.com/api</property>
+  </properties>
+
+  <strings>
+    <string id="AppName">Garmin Badges</string>
+    <string id="ApiKeyTitle">API Key</string>
+    <string id="ApiUrlTitle">API URL</string>
+  </strings>
+
+  <settings>
+    <setting propertyKey="@Properties.ApiKey" title="@Strings.ApiKeyTitle">
+      <settingConfig type="alphaNumeric"/>
+    </setting>
+    <setting propertyKey="@Properties.ApiUrl" title="@Strings.ApiUrlTitle">
+      <settingConfig type="alphaNumeric"/>
+    </setting>
+  </settings>
+
+</resources>

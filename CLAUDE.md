@@ -22,11 +22,7 @@ garminbadges-watch/
     ├── drawables/
     │   ├── drawables.xml
     │   └── launcher_icon.svg
-    ├── settings/
-    │   ├── properties.xml        # App properties: ApiKey (string), ApiUrl (string)
-    │   └── settings.xml          # Settings UI config for Garmin Connect app
-    └── strings/
-        └── strings.xml
+    └── properties.xml             # Combined properties/strings/settings: ApiKey, ApiUrl
 ```
 
 ## Build
@@ -53,7 +49,7 @@ Set `ApiKey` in the simulator via **File → Edit Persistent Storage → Edit Ap
 ## Key gotchas
 
 - **Manifest `type`** must be `watch-app` (hyphenated), not `watchApp`. The SDK's `projectInfo.xml` is authoritative.
-- **`properties.xml`** values are inline text on the `<property>` element — no `<default>` child element.
+- **`resources/properties.xml`** must be a single combined file with a `<resources>` root containing `<properties>`, `<strings>`, and `<settings>` together — separate files (e.g. `resources/settings/properties.xml` + `settings.xml`) cause the compiler to silently skip generating the `-settings.json` file. Property values are inline text on the `<property>` element — no `<default>` child element. Setting type is `alphaNumeric` (capital N).
 - **`onReceive` callback** type signature must exactly match `Lang.Dictionary or Lang.String or PersistedContent.Iterator or Null` — the generic `Lang.Object?` is rejected by the type checker.
 - **`Communications` permission** covers HTTP; there is no separate `InternetConnection` permission.
 - **No layout XML** — all drawing is programmatic in `onUpdate()` using `dc.drawText()` / `dc.drawLine()`. Coordinates use fractional screen height (e.g. `h * 0.31`) to scale across device sizes.
@@ -67,15 +63,13 @@ Set `ApiKey` in the simulator via **File → Edit Persistent Storage → Edit Ap
 Response shape:
 ```json
 {
-  "current_streak": 5,
-  "earns_this_year": 42,
-  "points_this_year": 1250,
-  "recent_badge": { "name": "Badge Name", "earned_date": "2026-06-09" },
-  "top_challenge": { "name": "Challenge Name", "progress_value": 7, "target_value": 10, "unit_key": "km" }
+  "upcoming_badges": [
+    { "name": "Challenge Name", "progress_value": 7, "target_value": 10, "unit_key": "km" }
+  ]
 }
 ```
 
-`top_challenge` is the in-progress badge (earned_date IS NULL) with the highest `progress_value / target_value` ratio. Either field may be `null` if there are no recent earns or challenges.
+`upcoming_badges` is up to 3 in-progress badges (earned_date IS NULL) sorted by `progress_value / target_value` descending. Empty array if there are no in-progress challenges.
 
 ## Adding new screens / data
 

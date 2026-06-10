@@ -4,10 +4,7 @@ A Garmin Connect IQ watch app that shows your [GarminBadges](https://garminbadge
 
 ## What it shows
 
-- **Current streak** — consecutive days with at least one badge earn
-- **Year-to-date earns and points**
-- **Most recent badge** earned
-- **Top in-progress challenge** — the challenge closest to completion
+- **Upcoming badges** — your in-progress challenges (up to 3), sorted by completion percentage, each with a progress bar and fraction (e.g. `7/10 km`)
 
 Data is fetched live from the GarminBadges API using your account's API key. Press the SELECT button to refresh.
 
@@ -64,9 +61,5 @@ garminbadges-watch/
 │   └── GarminBadgesDelegate.mc         # Input handling (SELECT = refresh)
 └── resources/
     ├── drawables/                      # Launcher icon
-    ├── settings/
-    │   ├── properties.xml              # App properties (ApiKey, ApiUrl)
-    │   └── settings.xml                # Settings UI shown in Garmin Connect
-    └── strings/
-        └── strings.xml                 # Localised strings
+    └── properties.xml                  # App properties + settings UI (ApiKey, ApiUrl)
 ```

@@ -7,13 +7,9 @@ import Toybox.WatchUi;
 
 class GarminBadgesView extends WatchUi.View {
 
-    private var _loading    as Lang.Boolean = true;
-    private var _error      as Lang.String  = "";
-    private var _streak     as Lang.Number  = 0;
-    private var _earnsYear  as Lang.Number  = 0;
-    private var _pointsYear as Lang.Number  = 0;
-    private var _recentBadge    as Lang.String = "";
-    private var _challengeText  as Lang.String = "";
+    private var _loading  as Lang.Boolean = true;
+    private var _error    as Lang.String  = "";
+    private var _upcoming as Lang.Array<Lang.Dictionary> = [];
 
     private const RED  = 0xe53935;
     private const GRAY = 0x888888;
@@ -67,38 +63,11 @@ class GarminBadgesView extends WatchUi.View {
         if (responseCode == 200 && data instanceof Lang.Dictionary) {
             var d = data as Lang.Dictionary;
 
-            var streak = d.get("current_streak");
-            _streak = (streak != null) ? streak as Lang.Number : 0;
-
-            var earns = d.get("earns_this_year");
-            _earnsYear = (earns != null) ? earns as Lang.Number : 0;
-
-            var pts = d.get("points_this_year");
-            _pointsYear = (pts != null) ? pts as Lang.Number : 0;
-
-            var rb = d.get("recent_badge");
-            if (rb instanceof Lang.Dictionary) {
-                var name = (rb as Lang.Dictionary).get("name");
-                _recentBadge = (name != null) ? name as Lang.String : "";
+            var ub = d.get("upcoming_badges");
+            if (ub instanceof Lang.Array) {
+                _upcoming = ub as Lang.Array<Lang.Dictionary>;
             } else {
-                _recentBadge = "";
-            }
-
-            var ch = d.get("top_challenge");
-            if (ch instanceof Lang.Dictionary) {
-                var chd  = ch as Lang.Dictionary;
-                var name = chd.get("name");
-                var prog = chd.get("progress_value");
-                var tgt  = chd.get("target_value");
-                if (name != null && prog != null && tgt != null) {
-                    var progNum = (prog as Lang.Float).toNumber();
-                    var tgtNum  = (tgt as Lang.Float).toNumber();
-                    _challengeText = trim(name as Lang.String, 16) + " " + progNum + "/" + tgtNum;
-                } else {
-                    _challengeText = "";
-                }
-            } else {
-                _challengeText = "";
+                _upcoming = [];
             }
 
             _error = "";
@@ -140,49 +109,80 @@ class GarminBadgesView extends WatchUi.View {
 
         // Title
         dc.setColor(RED, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, (h * 0.10 + 0.5).toNumber(), Graphics.FONT_TINY,
-            "GARMIN BADGES", justify);
-
-        // Streak — hero number
-        dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, (h * 0.31 + 0.5).toNumber(), Graphics.FONT_NUMBER_MEDIUM,
-            _streak.toString(), justify);
-
-        dc.setColor(GRAY, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, (h * 0.44 + 0.5).toNumber(), Graphics.FONT_XTINY,
-            "DAY STREAK", justify);
+        dc.drawText(cx, (h * 0.08 + 0.5).toNumber(), Graphics.FONT_TINY,
+            "UPCOMING BADGES", justify);
 
         // Divider
         dc.setColor(DIM, Graphics.COLOR_TRANSPARENT);
-        dc.drawLine((w * 0.15).toNumber(), (h * 0.52).toNumber(),
-                    (w * 0.85).toNumber(), (h * 0.52).toNumber());
+        dc.drawLine((w * 0.15).toNumber(), (h * 0.16).toNumber(),
+                    (w * 0.85).toNumber(), (h * 0.16).toNumber());
 
-        // Earns + Points (side by side)
-        var lx = (w * 0.28 + 0.5).toNumber();
-        var rx = (w * 0.72 + 0.5).toNumber();
-
-        dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(lx, (h * 0.62 + 0.5).toNumber(), Graphics.FONT_NUMBER_MILD,
-            _earnsYear.toString(), justify);
-        dc.drawText(rx, (h * 0.62 + 0.5).toNumber(), Graphics.FONT_NUMBER_MILD,
-            _pointsYear.toString(), justify);
-
-        dc.setColor(GRAY, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(lx, (h * 0.71 + 0.5).toNumber(), Graphics.FONT_XTINY, "EARNS",  justify);
-        dc.drawText(rx, (h * 0.71 + 0.5).toNumber(), Graphics.FONT_XTINY, "POINTS", justify);
-
-        // Most recent badge
-        if (!_recentBadge.equals("")) {
+        if (_upcoming.size() == 0) {
             dc.setColor(GRAY, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(cx, (h * 0.82 + 0.5).toNumber(), Graphics.FONT_TINY,
-                trim(_recentBadge, 22), justify);
+            dc.drawText(cx, h / 2, Graphics.FONT_SMALL,
+                "No challenges\nin progress", justify);
+            return;
         }
 
-        // Top challenge
-        if (!_challengeText.equals("")) {
-            dc.setColor(RED, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(cx, (h * 0.91 + 0.5).toNumber(), Graphics.FONT_XTINY,
-                _challengeText, justify);
+        var barLeft   = (w * 0.12).toNumber();
+        var barRight  = (w * 0.88).toNumber();
+        var barWidth  = barRight - barLeft;
+        var barHeight = (h * 0.035 + 0.5).toNumber();
+
+        var count = _upcoming.size();
+        if (count > 3) {
+            count = 3;
+        }
+
+        for (var i = 0; i < count; i += 1) {
+            var badge = _upcoming[i] as Lang.Dictionary;
+
+            var name    = badge.get("name");
+            var nameStr = (name != null) ? name as Lang.String : "";
+
+            var progress = badge.get("progress_value");
+            var target   = badge.get("target_value");
+            var unit     = badge.get("unit_key");
+
+            var progressVal = (progress != null) ? progress as Lang.Float : 0.0;
+            var targetVal   = (target != null) ? target as Lang.Float : 1.0;
+            var unitStr     = (unit != null) ? unit as Lang.String : "";
+
+            var ratio = progressVal / targetVal;
+            if (ratio > 1.0) {
+                ratio = 1.0;
+            }
+            if (ratio < 0.0) {
+                ratio = 0.0;
+            }
+
+            var rowTop = h * 0.22 + i * h * 0.255;
+
+            // Badge name
+            dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
+            dc.drawText(cx, (rowTop + h * 0.045).toNumber(), Graphics.FONT_XTINY,
+                trim(nameStr, 22), justify);
+
+            // Progress bar background
+            var barTop = (rowTop + h * 0.105).toNumber();
+            dc.setColor(DIM, Graphics.COLOR_TRANSPARENT);
+            dc.drawRectangle(barLeft, barTop, barWidth, barHeight);
+
+            // Progress bar fill
+            var fillWidth = (barWidth * ratio).toNumber();
+            if (fillWidth > 0) {
+                dc.setColor(RED, Graphics.COLOR_TRANSPARENT);
+                dc.fillRectangle(barLeft, barTop, fillWidth, barHeight);
+            }
+
+            // Fraction text
+            dc.setColor(GRAY, Graphics.COLOR_TRANSPARENT);
+            var fractionText = formatNum(progressVal) + "/" + formatNum(targetVal);
+            if (!unitStr.equals("")) {
+                fractionText += " " + unitStr;
+            }
+            dc.drawText(cx, (rowTop + h * 0.18 + 0.5).toNumber(), Graphics.FONT_XTINY,
+                fractionText, justify);
         }
     }
 
@@ -191,5 +191,12 @@ class GarminBadgesView extends WatchUi.View {
             return s.substring(0, maxLen - 1) + "~";
         }
         return s;
+    }
+
+    private function formatNum(value as Lang.Float) as Lang.String {
+        if (value == value.toNumber().toFloat()) {
+            return value.toNumber().toString();
+        }
+        return value.format("%.1f");
     }
 }
