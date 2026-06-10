@@ -67,7 +67,7 @@ Response shape:
 ```json
 {
   "challenges": [
-    { "name": "Challenge Name", "progress_value": 7000, "target_value": 10000, "unit_key": "mi_km" }
+    { "name": "Challenge Name", "progress_value": 7000, "target_value": 10000, "unit_key": "mi_km", "days_behind": 2 }
   ],
   "upcoming": [
     { "name": "New Challenge", "days_until": 3 }
@@ -75,15 +75,17 @@ Response shape:
 }
 ```
 
-`challenges` is up to 20 in-progress, time-limited badges (earned_date IS NULL, with both `start_date` and `end_date` set), sorted descending by "days behind schedule" — `(elapsed_fraction - progress_fraction) * total_days` of the challenge window. `upcoming` is up to 2 badges with `start_date` in the next 7 days, sorted by `start_date` ascending. Either array may be empty.
+`challenges` is up to 20 in-progress, time-limited badges (earned_date IS NULL, with both `start_date` and `end_date` set). They're sorted with started badges (`progress_value > 0`) first — ranked descending by "days behind schedule", `days_behind` = `(elapsed_fraction - progress_fraction) * total_days` of the challenge window — followed by not-yet-started badges last. `upcoming` is up to 2 badges with `start_date` in the next 7 days, sorted by `start_date` ascending. Either array may be empty.
 
-`progress_value`/`target_value` are in the badge's raw storage units (meters for `mi_km`, seconds for `seconds`) — formatting/unit conversion happens on-device in `formatFraction()`/`formatTime()`, not in the API.
+`progress_value`/`target_value` are in the badge's raw storage units (meters for `mi_km`, seconds for `seconds`) — formatting/unit conversion happens on-device in `formatFraction()`/`formatTime()`, not in the API. `days_behind` is a rounded integer; positive = behind schedule, negative = ahead, 0 = on track.
 
-The view shows "UPCOMING" at the top only when `upcoming` is non-empty. The main page shows only the first 5 `challenges` (already sorted most-urgent first); if more than 5 are returned, a "MORE ▸" row is appended. The `challenges` list is scrollable (UP/DOWN buttons or swipe) when more rows exist than fit on screen.
+**JSON number gotcha**: `progress_value`/`target_value`/`days_behind` decode as `Lang.Number` when the JSON has no decimal point (e.g. `92901`) and `Lang.Float` when it does (e.g. `283686.49`). Mixing the two in arithmetic without converting causes integer division (silently truncates a fraction to `0`). Always go through `toFloatVal()` before doing math on these fields.
+
+The view shows "UPCOMING" at the top only when `upcoming` is non-empty. The main page shows only the first 5 `challenges` (already sorted most-urgent first); if more than 5 are returned, a "MORE" row is appended. The `challenges` list is scrollable (UP/DOWN buttons or swipe) when more rows exist than fit on screen. Each row shows the badge name and a "+Nd"/"-Nd"/"0d" `days_behind` indicator (red/green/gray) alongside the progress bar.
 
 ## All-challenges page
 
-When more than 5 challenges are returned, `GarminBadgesView` shows a "MORE ▸" row after the 5th challenge. Tapping that row, or pressing MENU from the main page (when `hasMoreChallenges()` is true), pushes `GarminBadgesAllChallengesView` via `WatchUi.pushView()` — it lists *all* challenges from the same response, in the same sorted order, using the same row layout/scrolling as the main page. BACK pops back to the main page (default `BehaviorDelegate` behavior).
+When more than 5 challenges are returned, `GarminBadgesView` shows a "MORE" row after the 5th challenge. Scrolling down to that row and pressing SELECT/tapping (`atMoreRow()` is true), or pressing MENU from the main page (when `hasMoreChallenges()` is true), pushes `GarminBadgesAllChallengesView` via `WatchUi.pushView()` — it lists *all* challenges from the same response, in the same sorted order, using the same row layout/scrolling as the main page. BACK pops back to the main page (default `BehaviorDelegate` behavior).
 
 ## Unit formatting
 

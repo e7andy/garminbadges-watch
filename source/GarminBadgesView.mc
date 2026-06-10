@@ -16,16 +16,12 @@ class GarminBadgesView extends WatchUi.View {
     private var _scrollOffset as Lang.Number = 0;
     private var _maxScroll    as Lang.Number = 0;
 
-    // Bounds (screen px) of the "MORE" row when visible, for tap detection.
-    // -1 when not currently shown/visible.
-    private var _moreTop    as Lang.Number = -1;
-    private var _moreBottom as Lang.Number = -1;
-
     private const ROW_HEIGHT_FRAC = 0.255;
 
-    private const RED  = 0xe53935;
-    private const GRAY = 0x888888;
-    private const DIM  = 0x444444;
+    private const RED   = 0xe53935;
+    private const GREEN = 0x43a047;
+    private const GRAY  = 0x888888;
+    private const DIM   = 0x444444;
 
     function initialize() {
         View.initialize();
@@ -224,9 +220,6 @@ class GarminBadgesView extends WatchUi.View {
             _scrollOffset = _maxScroll;
         }
 
-        _moreTop    = -1;
-        _moreBottom = -1;
-
         dc.setClip(0, viewportTop, w, viewportHeight);
 
         for (var i = 0; i < totalRows; i += 1) {
@@ -239,12 +232,9 @@ class GarminBadgesView extends WatchUi.View {
 
             // "MORE" row
             if (i >= displayCount) {
-                _moreTop    = rowTop;
-                _moreBottom = rowTop + rowHeightPx;
-
                 dc.setColor(RED, Graphics.COLOR_TRANSPARENT);
                 dc.drawText(cx, (rowTop + rowHeightPx / 2).toNumber(), Graphics.FONT_XTINY,
-                    "MORE ▸", justify);
+                    "MORE", justify);
                 continue;
             }
 
@@ -253,13 +243,15 @@ class GarminBadgesView extends WatchUi.View {
             var name    = badge.get("name");
             var nameStr = (name != null) ? name as Lang.String : "";
 
-            var progress = badge.get("progress_value");
-            var target   = badge.get("target_value");
-            var unit     = badge.get("unit_key");
+            var progress   = badge.get("progress_value");
+            var target     = badge.get("target_value");
+            var unit       = badge.get("unit_key");
+            var daysBehind = badge.get("days_behind");
 
-            var progressVal = (progress != null) ? progress as Lang.Float : 0.0;
-            var targetVal   = (target != null) ? target as Lang.Float : 1.0;
-            var unitStr     = (unit != null) ? unit as Lang.String : "";
+            var progressVal     = toFloatVal(progress, 0.0);
+            var targetVal       = toFloatVal(target, 1.0);
+            var unitStr         = (unit != null) ? unit as Lang.String : "";
+            var daysBehindVal   = toFloatVal(daysBehind, 0.0);
 
             var ratio = progressVal / targetVal;
             if (ratio > 1.0) {
@@ -269,10 +261,23 @@ class GarminBadgesView extends WatchUi.View {
                 ratio = 0.0;
             }
 
-            // Badge name
+            var nameY = (rowTop + h * 0.045).toNumber();
+
+            // Badge name (left)
             dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(cx, (rowTop + h * 0.045).toNumber(), Graphics.FONT_XTINY,
-                trim(nameStr, 22), justify);
+            dc.drawText(barLeft, nameY, Graphics.FONT_XTINY,
+                trim(nameStr, 16), Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
+
+            // Days ahead/behind schedule (right)
+            var daysColor = GRAY;
+            if (daysBehindVal >= 0.5) {
+                daysColor = RED;
+            } else if (daysBehindVal <= -0.5) {
+                daysColor = GREEN;
+            }
+            dc.setColor(daysColor, Graphics.COLOR_TRANSPARENT);
+            dc.drawText(barRight, nameY, Graphics.FONT_XTINY,
+                formatDaysOffset(daysBehindVal), Graphics.TEXT_JUSTIFY_RIGHT | Graphics.TEXT_JUSTIFY_VCENTER);
 
             // Progress bar background
             var barTop = (rowTop + h * 0.105).toNumber();
@@ -314,9 +319,9 @@ class GarminBadgesView extends WatchUi.View {
         return _challenges.size() > 5;
     }
 
-    // True if (x, y) falls within the currently-visible "MORE" row.
-    function isMoreTap(x as Lang.Number, y as Lang.Number) as Lang.Boolean {
-        return _moreTop >= 0 && y >= _moreTop && y < _moreBottom;
+    // True when the list is scrolled all the way down to the "MORE" row.
+    function atMoreRow() as Lang.Boolean {
+        return hasMoreChallenges() && _maxScroll > 0 && _scrollOffset >= _maxScroll;
     }
 
     // Push the "all challenges" page, sorted most-urgent first.
@@ -331,6 +336,27 @@ class GarminBadgesView extends WatchUi.View {
             return s.substring(0, maxLen - 1) + "~";
         }
         return s;
+    }
+
+    // JSON numbers without a fractional part decode as Lang.Number, not
+    // Lang.Float — convert explicitly so arithmetic doesn't truncate.
+    private function toFloatVal(value as Lang.Object?, defaultVal as Lang.Float) as Lang.Float {
+        if (value instanceof Lang.Float) {
+            return value as Lang.Float;
+        }
+        if (value instanceof Lang.Number) {
+            return (value as Lang.Number).toFloat();
+        }
+        return defaultVal;
+    }
+
+    // Positive = behind schedule ("+Nd"), negative = ahead ("-Nd"), 0 = on track.
+    private function formatDaysOffset(daysBehind as Lang.Float) as Lang.String {
+        var rounded = daysBehind.toNumber();
+        if (rounded > 0) {
+            return "+" + rounded.toString() + "d";
+        }
+        return rounded.toString() + "d";
     }
 
     private function formatNum(value as Lang.Float) as Lang.String {

@@ -12,20 +12,14 @@ class GarminBadgesDelegate extends WatchUi.BehaviorDelegate {
         _view = view;
     }
 
-    // SELECT button — refresh data
+    // SELECT button / tap — open the all-challenges page when scrolled to the
+    // "MORE" row, otherwise refresh data
     function onSelect() as Lang.Boolean {
-        _view.fetchData();
-        return true;
-    }
-
-    // Tap on the "MORE" row — open the all-challenges page; otherwise refresh
-    function onTap(clickEvent as WatchUi.ClickEvent) as Lang.Boolean {
-        var coords = clickEvent.getCoordinates();
-        if (_view.isMoreTap(coords[0], coords[1])) {
+        if (_view.atMoreRow()) {
             _view.showAllChallenges();
-            return true;
+        } else {
+            _view.fetchData();
         }
-        _view.fetchData();
         return true;
     }
 
