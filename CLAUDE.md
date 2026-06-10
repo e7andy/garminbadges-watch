@@ -15,9 +15,11 @@ garminbadges-watch/
 ├── manifest.xml                  # App metadata, type, permissions, target devices
 ├── jungle.xml                    # Build config (source/resource paths)
 ├── source/
-│   ├── GarminBadgesApp.mc        # AppBase entry point; creates view + delegate
-│   ├── GarminBadgesView.mc       # All UI rendering (programmatic via dc.draw*) + HTTP fetch + scroll state
-│   └── GarminBadgesDelegate.mc   # BehaviorDelegate; SELECT = refresh, UP/DOWN/swipe = scroll challenges list
+│   ├── GarminBadgesApp.mc                  # AppBase entry point; creates view + delegate
+│   ├── GarminBadgesView.mc                 # Main page: UI rendering (programmatic via dc.draw*) + HTTP fetch + scroll state
+│   ├── GarminBadgesDelegate.mc             # BehaviorDelegate for main page; SELECT/tap = refresh, UP/DOWN/swipe = scroll, tap MORE / MENU = open all-challenges page
+│   ├── GarminBadgesAllChallengesView.mc    # Second page: all challenges sorted most-urgent first, scrollable
+│   └── GarminBadgesAllChallengesDelegate.mc # BehaviorDelegate for the all-challenges page; UP/DOWN/swipe = scroll, BACK = pop
 └── resources/
     ├── drawables/
     │   ├── drawables.xml
@@ -73,11 +75,15 @@ Response shape:
 }
 ```
 
-`challenges` is up to 5 in-progress, time-limited badges (earned_date IS NULL, with both `start_date` and `end_date` set), sorted descending by "days behind schedule" — `(elapsed_fraction - progress_fraction) * total_days` of the challenge window. `upcoming` is up to 2 badges with `start_date` in the next 7 days, sorted by `start_date` ascending. Either array may be empty.
+`challenges` is up to 20 in-progress, time-limited badges (earned_date IS NULL, with both `start_date` and `end_date` set), sorted descending by "days behind schedule" — `(elapsed_fraction - progress_fraction) * total_days` of the challenge window. `upcoming` is up to 2 badges with `start_date` in the next 7 days, sorted by `start_date` ascending. Either array may be empty.
 
 `progress_value`/`target_value` are in the badge's raw storage units (meters for `mi_km`, seconds for `seconds`) — formatting/unit conversion happens on-device in `formatFraction()`/`formatTime()`, not in the API.
 
-The view shows "UPCOMING" at the top only when `upcoming` is non-empty. The `challenges` list is scrollable (UP/DOWN buttons or swipe) when more rows exist than fit on screen.
+The view shows "UPCOMING" at the top only when `upcoming` is non-empty. The main page shows only the first 5 `challenges` (already sorted most-urgent first); if more than 5 are returned, a "MORE ▸" row is appended. The `challenges` list is scrollable (UP/DOWN buttons or swipe) when more rows exist than fit on screen.
+
+## All-challenges page
+
+When more than 5 challenges are returned, `GarminBadgesView` shows a "MORE ▸" row after the 5th challenge. Tapping that row, or pressing MENU from the main page (when `hasMoreChallenges()` is true), pushes `GarminBadgesAllChallengesView` via `WatchUi.pushView()` — it lists *all* challenges from the same response, in the same sorted order, using the same row layout/scrolling as the main page. BACK pops back to the main page (default `BehaviorDelegate` behavior).
 
 ## Unit formatting
 

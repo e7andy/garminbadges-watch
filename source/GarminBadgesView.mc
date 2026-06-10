@@ -16,6 +16,11 @@ class GarminBadgesView extends WatchUi.View {
     private var _scrollOffset as Lang.Number = 0;
     private var _maxScroll    as Lang.Number = 0;
 
+    // Bounds (screen px) of the "MORE" row when visible, for tap detection.
+    // -1 when not currently shown/visible.
+    private var _moreTop    as Lang.Number = -1;
+    private var _moreBottom as Lang.Number = -1;
+
     private const ROW_HEIGHT_FRAC = 0.255;
 
     private const RED  = 0xe53935;
@@ -200,9 +205,16 @@ class GarminBadgesView extends WatchUi.View {
         var barWidth  = barRight - barLeft;
         var barHeight = (h * 0.035 + 0.5).toNumber();
 
-        var count        = _challenges.size();
+        var totalCount   = _challenges.size();
+        var displayCount = totalCount;
+        if (displayCount > 5) {
+            displayCount = 5;
+        }
+        var hasMore = totalCount > 5;
+
         var rowHeightPx  = (h * ROW_HEIGHT_FRAC).toNumber();
-        var contentHeight = count * rowHeightPx;
+        var totalRows    = displayCount + (hasMore ? 1 : 0);
+        var contentHeight = totalRows * rowHeightPx;
 
         _maxScroll = contentHeight - viewportHeight;
         if (_maxScroll < 0) {
@@ -212,9 +224,30 @@ class GarminBadgesView extends WatchUi.View {
             _scrollOffset = _maxScroll;
         }
 
+        _moreTop    = -1;
+        _moreBottom = -1;
+
         dc.setClip(0, viewportTop, w, viewportHeight);
 
-        for (var i = 0; i < count; i += 1) {
+        for (var i = 0; i < totalRows; i += 1) {
+            var rowTop = viewportTop + i * rowHeightPx - _scrollOffset;
+
+            // Skip rows fully outside the viewport
+            if (rowTop + rowHeightPx <= viewportTop || rowTop >= viewportTop + viewportHeight) {
+                continue;
+            }
+
+            // "MORE" row
+            if (i >= displayCount) {
+                _moreTop    = rowTop;
+                _moreBottom = rowTop + rowHeightPx;
+
+                dc.setColor(RED, Graphics.COLOR_TRANSPARENT);
+                dc.drawText(cx, (rowTop + rowHeightPx / 2).toNumber(), Graphics.FONT_XTINY,
+                    "MORE ▸", justify);
+                continue;
+            }
+
             var badge = _challenges[i] as Lang.Dictionary;
 
             var name    = badge.get("name");
@@ -234,13 +267,6 @@ class GarminBadgesView extends WatchUi.View {
             }
             if (ratio < 0.0) {
                 ratio = 0.0;
-            }
-
-            var rowTop = viewportTop + i * rowHeightPx - _scrollOffset;
-
-            // Skip rows fully outside the viewport
-            if (rowTop + rowHeightPx <= viewportTop || rowTop >= viewportTop + viewportHeight) {
-                continue;
             }
 
             // Badge name
@@ -280,6 +306,24 @@ class GarminBadgesView extends WatchUi.View {
             dc.setColor(DIM, Graphics.COLOR_TRANSPARENT);
             dc.fillRoundedRectangle(trackX, thumbY, (w * 0.015 + 0.5).toNumber(), thumbHeight, 2);
         }
+    }
+
+    // True once the catalogue has more in-progress challenges than fit on the
+    // main page (i.e. the "MORE" row is shown).
+    function hasMoreChallenges() as Lang.Boolean {
+        return _challenges.size() > 5;
+    }
+
+    // True if (x, y) falls within the currently-visible "MORE" row.
+    function isMoreTap(x as Lang.Number, y as Lang.Number) as Lang.Boolean {
+        return _moreTop >= 0 && y >= _moreTop && y < _moreBottom;
+    }
+
+    // Push the "all challenges" page, sorted most-urgent first.
+    function showAllChallenges() as Void {
+        var view     = new GarminBadgesAllChallengesView(_challenges);
+        var delegate = new GarminBadgesAllChallengesDelegate(view);
+        WatchUi.pushView(view, delegate, WatchUi.SLIDE_LEFT);
     }
 
     private function trim(s as Lang.String, maxLen as Lang.Number) as Lang.String {

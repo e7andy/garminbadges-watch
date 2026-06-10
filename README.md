@@ -5,7 +5,7 @@ A Garmin Connect IQ watch app that shows your [GarminBadges](https://garminbadge
 ## What it shows
 
 - **Upcoming** — badges/challenges starting within the next 7 days (shown only when there are any)
-- **Challenges** — your 5 most urgent in-progress challenges, ranked by how many days behind schedule you are, each with a progress bar and fraction (e.g. `7/10 km`). Scroll with the UP/DOWN buttons or a swipe if there are more than fit on screen.
+- **Challenges** — your most urgent in-progress challenges, ranked by how many days behind schedule you are, each with a progress bar and fraction (e.g. `7/10 km`). Scroll with the UP/DOWN buttons or a swipe if there are more than fit on screen. The first 5 are shown on the main page; if you have more, tap the "MORE ▸" row (or press MENU) to see all of them on a second page, sorted most urgent first.
 
 Data is fetched live from the GarminBadges API using your account's API key. Press the SELECT button to refresh.
 
@@ -57,9 +57,11 @@ garminbadges-watch/
 ├── manifest.xml                        # App metadata, permissions, target devices
 ├── jungle.xml                          # Build config
 ├── source/
-│   ├── GarminBadgesApp.mc              # Entry point (AppBase)
-│   ├── GarminBadgesView.mc             # UI rendering + API fetch + scroll state
-│   └── GarminBadgesDelegate.mc         # Input handling (SELECT = refresh, UP/DOWN/swipe = scroll)
+│   ├── GarminBadgesApp.mc                   # Entry point (AppBase)
+│   ├── GarminBadgesView.mc                  # Main page: UI rendering + API fetch + scroll state
+│   ├── GarminBadgesDelegate.mc              # Main page input (SELECT/tap = refresh, UP/DOWN/swipe = scroll, MORE/MENU = open all-challenges page)
+│   ├── GarminBadgesAllChallengesView.mc     # Second page: all challenges, most urgent first
+│   └── GarminBadgesAllChallengesDelegate.mc # Second page input (UP/DOWN/swipe = scroll, BACK = pop)
 └── resources/
     ├── drawables/                      # Launcher icon
     └── properties.xml                  # App properties + settings UI (ApiKey, ApiUrl)
