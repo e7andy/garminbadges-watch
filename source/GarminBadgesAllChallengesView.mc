@@ -124,7 +124,7 @@ class GarminBadgesAllChallengesView extends WatchUi.View {
             // Badge name (left)
             dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
             dc.drawText(barLeft, nameY, Graphics.FONT_XTINY,
-                trim(nameStr, 16), Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
+                trim(nameStr, 24), Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
 
             // Days ahead/behind schedule (right)
             var daysColor = GRAY;
