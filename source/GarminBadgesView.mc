@@ -24,7 +24,7 @@ class GarminBadgesView extends WatchUi.View {
 
     private const MOMENTUM_FRICTION     = 0.95;
     private const MOMENTUM_MIN_VELOCITY = 10.0;
-    private const MOMENTUM_TICK_MS      = 30;
+    private const MOMENTUM_TICK_MS      = 50;
 
     private const RED   = 0xe53935;
     private const GREEN = 0x43a047;

@@ -17,9 +17,9 @@ garminbadges-watch/
 ├── source/
 │   ├── GarminBadgesApp.mc                  # AppBase entry point; creates view + delegate, getGlanceView() for the glance
 │   ├── GarminBadgesView.mc                 # Main page: UI rendering (programmatic via dc.draw*) + HTTP fetch + scroll state
-│   ├── GarminBadgesDelegate.mc             # BehaviorDelegate for main page; SELECT/tap = refresh, UP/DOWN/swipe = scroll, tap MORE / MENU = open all-challenges page
+│   ├── GarminBadgesDelegate.mc             # BehaviorDelegate for main page; SELECT/tap = refresh, UP/DOWN/drag/flick = scroll, tap MORE / MENU = open all-challenges page
 │   ├── GarminBadgesAllChallengesView.mc    # Second page: all challenges sorted most-urgent first, scrollable
-│   ├── GarminBadgesAllChallengesDelegate.mc # BehaviorDelegate for the all-challenges page; UP/DOWN/swipe = scroll, BACK = pop
+│   ├── GarminBadgesAllChallengesDelegate.mc # BehaviorDelegate for the all-challenges page; UP/DOWN/drag/flick = scroll, BACK = pop
 │   └── GarminBadgesGlanceView.mc           # Glance widget preview: title + progress bar + "behind" count
 └── resources/
     ├── drawables/
@@ -36,6 +36,23 @@ $SDK = "C:\Users\e7and\AppData\Roaming\Garmin\ConnectIQ\Sdks\connectiq-sdk-win-9
 ```
 
 Output goes to `bin/GarminBadges.prg` (ignored by `.gitignore`).
+
+## Publishing to the Connect IQ Store
+
+Until the app is published, sideloaded builds can't show a Settings screen in Garmin Connect Mobile (see "Settings on a real device" below) — publishing (even just submitting, before approval) registers the app's settings schema with Garmin's backend.
+
+1. **Garmin Connect IQ Developer account** — sign up / sign in at [apps.garmin.com](https://apps.garmin.com) (Connect IQ Developer Portal) using the same Garmin account as `developer_key`'s registered public key. If `developer_key` was generated fresh, upload the matching public key (`developer_key.pub` / `.der`) under your account's profile so builds signed with it are accepted.
+2. **Create the app listing** — "My Apps" → "Create App". Use the **same app ID** as `<iq:application id="...">` in `manifest.xml` (`a8e4c3b2-7f61-4d8e-9c2a-1b5f3e7d9a0c`) if the listing was created from this manifest; otherwise the portal assigns one and `manifest.xml` must be updated to match.
+3. **Build a release package** covering all supported devices (the full `<iq:products>` list in `manifest.xml`), with debug info stripped:
+   ```powershell
+   $SDK = "C:\Users\e7and\AppData\Roaming\Garmin\ConnectIQ\Sdks\connectiq-sdk-win-9.2.0-2026-06-09-92a1605b2"
+   & "$SDK\bin\monkeyc.bat" -f jungle.xml -d fenix6,fenix6pro,fenix6s,fenix6spro,fenix6xpro,fenix7,fenix7pro,fenix7pronowifi,fenix7s,fenix7spro,fenix7x,fenix7xpro,fenix7xpronowifi,fenix843mm,fenix847mm,fenix8pro47mm,fenix8solar47mm,fenix8solar51mm,fenixe,epix2,epix2pro42mm,epix2pro47mm,epix2pro51mm,enduro,enduro3,venu2,venu2plus,venu2s,venu3,venu3s,vivoactive4,vivoactive4s,vivoactive5,vivoactive6,fr245,fr245m,fr255,fr255m,fr255s,fr255sm,fr265,fr265s,fr745,fr945,fr945lte,fr955,fr965,fr970,fr57042mm,fr57047mm,instinct2,instinct2s,instinct2x,instinct3amoled45mm,instinct3amoled50mm,instinct3solar45mm,marq2,marq2aviator -o bin\GarminBadges.iq -y "C:\Users\e7and\My Drive\Backup\garmin\developer_key" -e -r
+   ```
+   `-e`/`--package-app` produces an `.iq` store package (instead of a single-device `.prg`); `-r`/`--release` strips debug info.
+4. **Upload `bin/GarminBadges.iq`** to the app listing via the Developer Portal's "Upload App" / App Versions tab.
+5. **Fill in store listing details**: name, description, category, supported devices (should match `manifest.xml`), screenshots per device group, app icon (`resources/drawables/launcher_icon.svg`), and a privacy policy URL — use `https://garminbadges.com/privacy`.
+6. **Submit for review.** Garmin reviews submissions (can take days). Once approved and published, users install via the Connect IQ Store / Garmin Connect Mobile app, and Connect Mobile's Settings screen will work (pulling `ApiKey`/`ApiUrl`/`MaxDurationDays` from the now-registered schema).
+7. **Future updates** — repeat steps 3–4 (build + upload a new `.iq`); the portal auto-increments the version on each upload, no manifest version field to bump.
 
 ## Simulator
 

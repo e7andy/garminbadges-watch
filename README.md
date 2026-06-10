@@ -58,6 +58,10 @@ Since the app defines a glance (`getGlanceView()`), the simulator opens directly
 
 **Note on settings:** Garmin Connect Mobile's Apps → Garmin Badges → Settings screen only works for apps registered in the Connect IQ Developer Portal — a sideloaded `.prg` shows "No Settings" with no on-watch way to enter your API key. To test on a real device, temporarily set your API key as the default value of `ApiKey` in `resources/properties.xml` before building, and revert it afterwards.
 
+### Publishing to the Connect IQ Store
+
+See the "Publishing to the Connect IQ Store" section in `CLAUDE.md` for the full process: registering the app on the [Connect IQ Developer Portal](https://apps.garmin.com), building a release `.iq` package with `monkeyc -e -r` covering all supported devices, and submitting the store listing. Publishing (even pending review) is also what makes Garmin Connect Mobile's Settings screen work, since it pulls the settings schema from Garmin's backend.
+
 ### API endpoint
 
 The watch app calls `GET /api/watch` on the GarminBadges backend, authenticated with the user's `api_key` as a Bearer token. The backend source lives in the [garminbadges](https://github.com/andersvan/garminbadges) repo at `backend/app/Http/Controllers/Api/WatchController.php`.
