@@ -184,7 +184,9 @@ class GarminBadgesView extends ScrollableView {
                 var ubDaysNum = (ubDays != null) ? ubDays as Lang.Number : 0;
 
                 if (_selectedUpcomingIdx == i) {
-                    BadgeFormat.drawSelectionMarker(dc, _upcomingRowTop + i * _upcomingRowHeight, _upcomingRowHeight, w);
+                    var ubRowTop = _upcomingRowTop + i * _upcomingRowHeight;
+                    BadgeFormat.drawSelectionTint(dc, ubRowTop, _upcomingRowHeight, w);
+                    BadgeFormat.drawSelectionMarker(dc, ubRowTop, _upcomingRowHeight, w);
                 }
 
                 dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
@@ -266,6 +268,11 @@ class GarminBadgesView extends ScrollableView {
                 continue;
             }
 
+            var isSelected = _selectedUpcomingIdx == -1 && i == selectedIdx;
+            if (isSelected) {
+                BadgeFormat.drawSelectionTint(dc, rowTop, rowHeightPx, w);
+            }
+
             // "MORE" row
             if (i >= displayCount) {
                 dc.setColor(BadgeFormat.RED, Graphics.COLOR_TRANSPARENT);
@@ -274,7 +281,7 @@ class GarminBadgesView extends ScrollableView {
                 continue;
             }
 
-            if (_selectedUpcomingIdx == -1 && i == selectedIdx) {
+            if (isSelected) {
                 BadgeFormat.drawSelectionMarker(dc, rowTop, rowHeightPx, w);
             }
 

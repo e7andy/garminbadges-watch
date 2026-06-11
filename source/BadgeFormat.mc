@@ -1,5 +1,6 @@
 import Toybox.Graphics;
 import Toybox.Lang;
+import Toybox.Math;
 import Toybox.System;
 
 // Shared formatting helpers and challenge-row drawing for the main and
@@ -11,6 +12,7 @@ module BadgeFormat {
     const GRAY      = 0x888888;
     const DIM       = 0x444444;
     const HIGHLIGHT = 0x2196f3;
+    const TINT      = 0x1c2733;
 
     const MENU_ICON_SIZE_FRAC   = 0.045;
     const MENU_ICON_MARGIN_FRAC = 0.05;
@@ -44,6 +46,26 @@ module BadgeFormat {
         }
 
         return words;
+    }
+
+    // Available text width (in pixels) at vertical position y. On
+    // round/semi-round screens this is the chord width at y rather than the
+    // full screen width, so wrapped text doesn't run under the bezel near
+    // the top/bottom of the screen.
+    function textMaxWidth(w as Lang.Number, h as Lang.Number, y as Lang.Number) as Lang.Number {
+        var shape = System.getDeviceSettings().screenShape;
+        if (shape != System.SCREEN_SHAPE_ROUND && shape != System.SCREEN_SHAPE_SEMI_ROUND) {
+            return (w * 0.9).toNumber();
+        }
+
+        var radius = w / 2.0;
+        var dy     = (y - h / 2.0).abs();
+        if (dy >= radius) {
+            return (w * 0.5).toNumber();
+        }
+
+        var chord = 2.0 * Math.sqrt(radius * radius - dy * dy);
+        return (chord * 0.88).toNumber();
     }
 
     // Greedily groups whole words into lines, each line's pixel width
@@ -247,6 +269,12 @@ module BadgeFormat {
             dc.drawText(cx, (rowTop + h * 0.18 + 0.5).toNumber(), Graphics.FONT_XTINY,
                 "No target", justify);
         }
+    }
+
+    // Draws a subtle background tint across a row, marking it as selected.
+    function drawSelectionTint(dc as Graphics.Dc, rowTop as Lang.Number, rowHeight as Lang.Number, w as Lang.Number) as Void {
+        dc.setColor(TINT, Graphics.COLOR_TRANSPARENT);
+        dc.fillRectangle(0, rowTop, w, rowHeight);
     }
 
     // Draws a vertical accent bar on the left edge of a row, marking it as

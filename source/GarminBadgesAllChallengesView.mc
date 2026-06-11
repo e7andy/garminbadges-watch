@@ -82,6 +82,7 @@ class GarminBadgesAllChallengesView extends ScrollableView {
             }
 
             if (i == selectedIdx) {
+                BadgeFormat.drawSelectionTint(dc, rowTop, rowHeightPx, w);
                 BadgeFormat.drawSelectionMarker(dc, rowTop, rowHeightPx, w);
             }
 

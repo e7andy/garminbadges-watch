@@ -52,9 +52,9 @@ class GarminBadgesChallengeDetailView extends WatchUi.View {
         dc.drawText(cx, (h * 0.06 + 0.5).toNumber(), Graphics.FONT_XTINY, "CHALLENGE", justify);
 
         // Name (wrapped, up to a few lines)
-        var nameLines  = BadgeFormat.wrapText(dc, nameStr, Graphics.FONT_SMALL, (w * 0.9).toNumber());
         var lineHeight = dc.getFontHeight(Graphics.FONT_SMALL);
         var nameTop    = (h * 0.16).toNumber();
+        var nameLines  = BadgeFormat.wrapText(dc, nameStr, Graphics.FONT_SMALL, BadgeFormat.textMaxWidth(w, h, nameTop));
         dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
         for (var i = 0; i < nameLines.size(); i += 1) {
             dc.drawText(cx, nameTop + i * lineHeight, Graphics.FONT_SMALL, nameLines[i] as Lang.String, justify);
