@@ -14,19 +14,6 @@ class GarminBadgesAllChallengesDelegate extends ScrollDelegate {
         _view = view;
     }
 
-    function onSelect() as Lang.Boolean {
-        if (!consumeSelectFromButton()) {
-            return false;
-        }
-
-        var challenge = _view.challengeAt(_view.viewportTop());
-        if (challenge != null) {
-            _view.showChallengeDetail(challenge);
-            return true;
-        }
-        return false;
-    }
-
     function onTap(clickEvent as WatchUi.ClickEvent) as Lang.Boolean {
         var coords    = clickEvent.getCoordinates();
         var challenge = _view.challengeAt(coords[1]);
@@ -37,11 +24,17 @@ class GarminBadgesAllChallengesDelegate extends ScrollDelegate {
         return false;
     }
 
-    // Start/Enter button — record so onSelect() knows to act on the
-    // marked/viewportTop() row (see ScrollDelegate.markKeyEnterPressed()).
-    function onKeyPressed(keyEvent as WatchUi.KeyEvent) as Lang.Boolean {
-        if (keyEvent.getKey() == WatchUi.KEY_ENTER) {
-            markKeyEnterPressed();
+    // Start/Enter button — open the detail page for the row at the top of
+    // the viewport (the implicitly "selected" row).
+    function onKeyReleased(keyEvent as WatchUi.KeyEvent) as Lang.Boolean {
+        if (keyEvent.getKey() != WatchUi.KEY_ENTER) {
+            return false;
+        }
+
+        var challenge = _view.challengeAt(_view.viewportTop());
+        if (challenge != null) {
+            _view.showChallengeDetail(challenge);
+            return true;
         }
         return false;
     }

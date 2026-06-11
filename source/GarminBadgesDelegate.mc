@@ -16,41 +16,6 @@ class GarminBadgesDelegate extends ScrollDelegate {
         _view = view;
     }
 
-    // SELECT button / tap — open the all-challenges page when scrolled to the
-    // "MORE" row, otherwise open the detail page for the selected challenge
-    function onSelect() as Lang.Boolean {
-        if (!consumeSelectFromButton()) {
-            return false;
-        }
-
-        var selUp = _view.selectedUpcomingIndex();
-        if (selUp >= 0) {
-            var upcoming = _view.upcomingBadgeAt(selUp);
-            if (upcoming != null) {
-                cancelMenuHoldTimer();
-                _view.showUpcomingDetail(upcoming);
-                return true;
-            }
-        }
-
-        if (_view.atMoreRow()) {
-            // Cancel any pending menu-hold timer so it doesn't fire onMenu()
-            // on top of the page we're about to navigate to (this delegate
-            // won't receive the matching onKeyReleased once that happens).
-            cancelMenuHoldTimer();
-            _view.showAllChallenges();
-            return true;
-        }
-
-        var challenge = _view.challengeAt(_view.viewportTop());
-        if (challenge != null) {
-            cancelMenuHoldTimer();
-            _view.showChallengeDetail(challenge);
-            return true;
-        }
-        return false;
-    }
-
     // DOWN button — move the "UPCOMING" selection forward, or once past the
     // last upcoming row, scroll the challenges list down by one row.
     function onNextPage() as Lang.Boolean {
@@ -94,9 +59,8 @@ class GarminBadgesDelegate extends ScrollDelegate {
         return true;
     }
 
-    // Cancels any pending menu-hold timer so it doesn't fire onMenu() on top
-    // of the page we're about to navigate to (this delegate won't receive the
-    // matching onKeyReleased once that happens).
+    // Cancels the pending menu-hold timer (called once START/STOP is
+    // released, whether or not it navigated anywhere).
     private function cancelMenuHoldTimer() as Void {
         if (_menuHoldTimer != null) {
             _menuHoldTimer.stop();
@@ -135,17 +99,44 @@ class GarminBadgesDelegate extends ScrollDelegate {
     // Holding START/STOP also opens the options menu
     function onKeyPressed(keyEvent as WatchUi.KeyEvent) as Lang.Boolean {
         if (keyEvent.getKey() == WatchUi.KEY_ENTER) {
-            markKeyEnterPressed();
             _menuHoldTimer = new Timer.Timer();
             _menuHoldTimer.start(method(:onMenuHoldTimer), MENU_HOLD_MS, false);
         }
         return false;
     }
 
+    // START/STOP released before the hold timer fired — open the
+    // detail/all-challenges page for the selected/marked row, same as a tap.
+    // If the timer already fired (a long hold), onMenu() has already run, so
+    // do nothing.
     function onKeyReleased(keyEvent as WatchUi.KeyEvent) as Lang.Boolean {
-        if (_menuHoldTimer != null) {
-            _menuHoldTimer.stop();
-            _menuHoldTimer = null;
+        if (keyEvent.getKey() != WatchUi.KEY_ENTER) {
+            return false;
+        }
+
+        if (_menuHoldTimer == null) {
+            return false;
+        }
+        cancelMenuHoldTimer();
+
+        var selUp = _view.selectedUpcomingIndex();
+        if (selUp >= 0) {
+            var upcoming = _view.upcomingBadgeAt(selUp);
+            if (upcoming != null) {
+                _view.showUpcomingDetail(upcoming);
+                return true;
+            }
+        }
+
+        if (_view.atMoreRow()) {
+            _view.showAllChallenges();
+            return true;
+        }
+
+        var challenge = _view.challengeAt(_view.viewportTop());
+        if (challenge != null) {
+            _view.showChallengeDetail(challenge);
+            return true;
         }
         return false;
     }

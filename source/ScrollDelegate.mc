@@ -7,33 +7,18 @@ class ScrollDelegate extends WatchUi.BehaviorDelegate {
 
     private var _scrollView        as ScrollableView;
     private var _lastDragY         as Lang.Number?;
-    private var _selectFromButton  as Lang.Boolean = false;
 
     function initialize(view as ScrollableView) {
         BehaviorDelegate.initialize();
         _scrollView = view;
     }
 
-    // Call from onKeyPressed() when KEY_ENTER is pressed. KEY_ENTER is
-    // pressed before onSelect() is translated for a Start/Enter button press
-    // (but never for a touchscreen tap), letting onSelect() tell the two
-    // apart.
-    protected function markKeyEnterPressed() as Void {
-        _selectFromButton = true;
-    }
-
-    // onSelect() implementations must check this first and return false
-    // (without acting) if it returns false. A true result means this
-    // onSelect() follows a Start/Enter press (see markKeyEnterPressed()), so
-    // it should act on the marked/viewportTop() row. A false result means
-    // onSelect() is the system's coordinate-less translation of a touchscreen
-    // tap; returning false lets the system fall back to calling
-    // onTap(clickEvent), which has the tap coordinates.
-    protected function consumeSelectFromButton() as Lang.Boolean {
-        if (_selectFromButton) {
-            _selectFromButton = false;
-            return true;
-        }
+    // A tap is translated into a coordinate-less onSelect() call before
+    // onTap(clickEvent), which has the tap coordinates. Returning false here
+    // lets the system fall back to onTap(). Physical Start/Enter button
+    // presses are handled directly via onKeyPressed()/onKeyReleased() in
+    // subclasses instead, since those fire reliably for hardware keys.
+    function onSelect() as Lang.Boolean {
         return false;
     }
 
