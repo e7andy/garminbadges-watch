@@ -314,6 +314,16 @@ class GarminBadgesView extends ScrollableView {
         return _challenges[idx] as Lang.Dictionary;
     }
 
+    // True if the "MORE" row is at screen y-coordinate.
+    function moreRowAt(y as Lang.Number) as Lang.Boolean {
+        if (!hasMoreChallenges()) {
+            return false;
+        }
+
+        var displayCount = 5;
+        return rowIndexAt(y) == displayCount;
+    }
+
     // Number of "UPCOMING" rows shown (0-2).
     function upcomingCount() as Lang.Number {
         return _upcomingCount;

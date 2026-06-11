@@ -119,6 +119,11 @@ class GarminBadgesDelegate extends ScrollDelegate {
             return true;
         }
 
+        if (_view.moreRowAt(coords[1])) {
+            _view.showAllChallenges();
+            return true;
+        }
+
         var challenge = _view.challengeAt(coords[1]);
         if (challenge != null) {
             _view.showChallengeDetail(challenge);
