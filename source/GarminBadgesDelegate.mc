@@ -20,6 +20,13 @@ class GarminBadgesDelegate extends ScrollDelegate {
     // "MORE" row
     function onSelect() as Lang.Boolean {
         if (_view.atMoreRow()) {
+            // Cancel any pending menu-hold timer so it doesn't fire onMenu()
+            // on top of the page we're about to navigate to (this delegate
+            // won't receive the matching onKeyReleased once that happens).
+            if (_menuHoldTimer != null) {
+                _menuHoldTimer.stop();
+                _menuHoldTimer = null;
+            }
             _view.showAllChallenges();
             return true;
         }
