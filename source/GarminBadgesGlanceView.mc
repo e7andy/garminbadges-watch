@@ -11,6 +11,7 @@ import Toybox.WatchUi;
 class GarminBadgesGlanceView extends WatchUi.GlanceView {
 
     private var _loading   as Lang.Boolean = true;
+    private var _hasData   as Lang.Boolean = false;
     private var _error     as Lang.String  = "";
     private var _title     as Lang.String  = "";
     private var _behind    as Lang.Number  = 0;
@@ -32,6 +33,10 @@ class GarminBadgesGlanceView extends WatchUi.GlanceView {
     }
 
     function onShow() as Void {
+        var cached = BadgeCache.load();
+        if (cached != null) {
+            applyData(cached);
+        }
         fetchData();
         _timer = new Timer.Timer();
         _timer.start(method(:onTimer), 1000, true);
@@ -81,100 +86,108 @@ class GarminBadgesGlanceView extends WatchUi.GlanceView {
 
         if (responseCode == 200 && data instanceof Lang.Dictionary) {
             var d = data as Lang.Dictionary;
-
-            var challenges = [] as Lang.Array<Lang.Dictionary>;
-            var ch = d.get("challenges");
-            if (ch instanceof Lang.Array) {
-                challenges = ch as Lang.Array<Lang.Dictionary>;
-            }
-
-            var upcoming = [] as Lang.Array<Lang.Dictionary>;
-            var up = d.get("upcoming");
-            if (up instanceof Lang.Array) {
-                upcoming = up as Lang.Array<Lang.Dictionary>;
-            }
-
-            _behind = 0;
-            for (var i = 0; i < challenges.size(); i += 1) {
-                var c = challenges[i] as Lang.Dictionary;
-                var db = c.get("days_behind");
-                var dbVal = (db != null) ? db as Lang.Number : 0;
-                if (dbVal > 0) {
-                    _behind += 1;
-                }
-            }
-
-            // Closest upcoming badge takes priority (it's the "next thing
-            // coming up"); otherwise fall back to the most urgent challenge
-            // (challenges are already sorted most-behind-first by the API).
-            if (upcoming.size() > 0) {
-                var u = upcoming[0] as Lang.Dictionary;
-                var name = u.get("name");
-                var nameStr = (name != null) ? name as Lang.String : "";
-
-                var daysUntil = u.get("days_until");
-                var daysUntilVal = (daysUntil != null) ? daysUntil as Lang.Number : 0;
-
-                _title     = nameStr + " " + BadgeFormat.formatDaysUntil(daysUntilVal);
-                _hasTarget = false;
-                _ratio     = 0.0;
-            } else if (challenges.size() > 0) {
-                var c = challenges[0] as Lang.Dictionary;
-                var name = c.get("name");
-                var nameStr = (name != null) ? name as Lang.String : "";
-
-                var started = c.get("started");
-                var startedVal = (started == null) || (started as Lang.Boolean);
-                if (!startedVal) {
-                    var daysUntilStart = c.get("days_until_start");
-                    var daysUntilStartVal = (daysUntilStart != null) ? daysUntilStart as Lang.Number : 0;
-                    nameStr += " " + BadgeFormat.formatDaysUntil(daysUntilStartVal);
-                }
-
-                _title = nameStr;
-
-                var targetVal = BadgeFormat.toFloatVal(c.get("target_value"), 0.0);
-                if (targetVal > 0) {
-                    var progressVal = BadgeFormat.toFloatVal(c.get("progress_value"), 0.0);
-                    var ratio = progressVal / targetVal;
-                    if (ratio > 1.0) {
-                        ratio = 1.0;
-                    }
-                    if (ratio < 0.0) {
-                        ratio = 0.0;
-                    }
-                    _hasTarget = true;
-                    _ratio     = ratio;
-
-                    var daysBehindVal = BadgeFormat.toFloatVal(c.get("days_behind"), 0.0);
-                    if (daysBehindVal <= -0.5) {
-                        _barColor = BadgeFormat.GREEN;
-                    } else if (daysBehindVal >= 0.5) {
-                        _barColor = BadgeFormat.RED;
-                    } else {
-                        _barColor = BadgeFormat.GRAY;
-                    }
-                } else {
-                    _hasTarget = false;
-                    _ratio     = 0.0;
-                }
+            BadgeCache.save(d);
+            applyData(d);
+        } else if (!_hasData) {
+            if (responseCode == 401) {
+                _error = "Invalid API key";
+            } else if (responseCode == -2) {
+                _error = "No internet";
             } else {
-                _title     = "No challenges";
-                _hasTarget = false;
-                _ratio     = 0.0;
+                _error = "Error " + responseCode.toString();
             }
-
-            _error = "";
-
-        } else if (responseCode == 401) {
-            _error = "Invalid API key";
-        } else if (responseCode == -2) {
-            _error = "No internet";
-        } else {
-            _error = "Error " + responseCode.toString();
         }
 
         WatchUi.requestUpdate();
+    }
+
+    // Applies a /api/watch response (fresh or cached) to the glance state.
+    private function applyData(d as Lang.Dictionary) as Void {
+        var challenges = [] as Lang.Array<Lang.Dictionary>;
+        var ch = d.get("challenges");
+        if (ch instanceof Lang.Array) {
+            challenges = ch as Lang.Array<Lang.Dictionary>;
+        }
+
+        var upcoming = [] as Lang.Array<Lang.Dictionary>;
+        var up = d.get("upcoming");
+        if (up instanceof Lang.Array) {
+            upcoming = up as Lang.Array<Lang.Dictionary>;
+        }
+
+        _behind = 0;
+        for (var i = 0; i < challenges.size(); i += 1) {
+            var c = challenges[i] as Lang.Dictionary;
+            var db = c.get("days_behind");
+            var dbVal = (db != null) ? db as Lang.Number : 0;
+            if (dbVal > 0) {
+                _behind += 1;
+            }
+        }
+
+        // Closest upcoming badge takes priority (it's the "next thing
+        // coming up"); otherwise fall back to the most urgent challenge
+        // (challenges are already sorted most-behind-first by the API).
+        if (upcoming.size() > 0) {
+            var u = upcoming[0] as Lang.Dictionary;
+            var name = u.get("name");
+            var nameStr = (name != null) ? name as Lang.String : "";
+
+            var daysUntil = u.get("days_until");
+            var daysUntilVal = (daysUntil != null) ? daysUntil as Lang.Number : 0;
+
+            _title     = nameStr + " " + BadgeFormat.formatDaysUntil(daysUntilVal);
+            _hasTarget = false;
+            _ratio     = 0.0;
+        } else if (challenges.size() > 0) {
+            var c = challenges[0] as Lang.Dictionary;
+            var name = c.get("name");
+            var nameStr = (name != null) ? name as Lang.String : "";
+
+            var started = c.get("started");
+            var startedVal = (started == null) || (started as Lang.Boolean);
+            if (!startedVal) {
+                var daysUntilStart = c.get("days_until_start");
+                var daysUntilStartVal = (daysUntilStart != null) ? daysUntilStart as Lang.Number : 0;
+                nameStr += " " + BadgeFormat.formatDaysUntil(daysUntilStartVal);
+            }
+
+            _title = nameStr;
+
+            var targetVal = BadgeFormat.toFloatVal(c.get("target_value"), 0.0);
+            if (targetVal > 0) {
+                var progressVal = BadgeFormat.toFloatVal(c.get("progress_value"), 0.0);
+                var ratio = progressVal / targetVal;
+                if (ratio > 1.0) {
+                    ratio = 1.0;
+                }
+                if (ratio < 0.0) {
+                    ratio = 0.0;
+                }
+                _hasTarget = true;
+                _ratio     = ratio;
+
+                var daysBehindVal = BadgeFormat.toFloatVal(c.get("days_behind"), 0.0);
+                if (daysBehindVal <= -0.5) {
+                    _barColor = BadgeFormat.GREEN;
+                } else if (daysBehindVal >= 0.5) {
+                    _barColor = BadgeFormat.RED;
+                } else {
+                    _barColor = BadgeFormat.GRAY;
+                }
+            } else {
+                _hasTarget = false;
+                _ratio     = 0.0;
+            }
+        } else {
+            _title     = "No challenges";
+            _hasTarget = false;
+            _ratio     = 0.0;
+        }
+
+        _hasData = true;
+        _loading = false;
+        _error   = "";
     }
 
     function onUpdate(dc as Graphics.Dc) as Void {

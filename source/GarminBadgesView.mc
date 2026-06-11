@@ -8,6 +8,7 @@ import Toybox.WatchUi;
 class GarminBadgesView extends ScrollableView {
 
     private var _loading    as Lang.Boolean = true;
+    private var _hasData    as Lang.Boolean = false;
     private var _error      as Lang.String  = "";
     private var _challenges as Lang.Array<Lang.Dictionary> = [];
     private var _upcoming   as Lang.Array<Lang.Dictionary> = [];
@@ -20,6 +21,10 @@ class GarminBadgesView extends ScrollableView {
     }
 
     function onShow() as Void {
+        var cached = BadgeCache.load();
+        if (cached != null) {
+            applyData(cached);
+        }
         fetchData();
     }
 
@@ -38,9 +43,11 @@ class GarminBadgesView extends ScrollableView {
             apiUrl = "https://api.garminbadges.com/api";
         }
 
-        _loading = true;
-        _error   = "";
-        WatchUi.requestUpdate();
+        if (!_hasData) {
+            _loading = true;
+            _error   = "";
+            WatchUi.requestUpdate();
+        }
 
         var options = {
             :method       => Communications.HTTP_REQUEST_METHOD_GET,
@@ -59,38 +66,46 @@ class GarminBadgesView extends ScrollableView {
 
         if (responseCode == 200 && data instanceof Lang.Dictionary) {
             var d = data as Lang.Dictionary;
-
-            var maxDuration = Application.Properties.getValue("MaxDurationDays") as Lang.Number?;
-            if (maxDuration == null) {
-                maxDuration = 0;
-            }
-
-            var ch = d.get("challenges");
-            if (ch instanceof Lang.Array) {
-                _challenges = filterByDuration(ch as Lang.Array<Lang.Dictionary>, maxDuration);
+            BadgeCache.save(d);
+            applyData(d);
+        } else if (!_hasData) {
+            if (responseCode == 401) {
+                _error = "Invalid API key";
+            } else if (responseCode == -2) {
+                _error = "No internet";
             } else {
-                _challenges = [];
+                _error = "Error " + responseCode.toString();
             }
-
-            var up = d.get("upcoming");
-            if (up instanceof Lang.Array) {
-                _upcoming = filterByDuration(up as Lang.Array<Lang.Dictionary>, maxDuration);
-            } else {
-                _upcoming = [];
-            }
-
-            _scrollOffset = 0;
-            _error = "";
-
-        } else if (responseCode == 401) {
-            _error = "Invalid API key";
-        } else if (responseCode == -2) {
-            _error = "No internet";
-        } else {
-            _error = "Error " + responseCode.toString();
         }
 
         WatchUi.requestUpdate();
+    }
+
+    // Applies a /api/watch response (fresh or cached) to the view state.
+    private function applyData(d as Lang.Dictionary) as Void {
+        var maxDuration = Application.Properties.getValue("MaxDurationDays") as Lang.Number?;
+        if (maxDuration == null) {
+            maxDuration = 0;
+        }
+
+        var ch = d.get("challenges");
+        if (ch instanceof Lang.Array) {
+            _challenges = filterByDuration(ch as Lang.Array<Lang.Dictionary>, maxDuration);
+        } else {
+            _challenges = [];
+        }
+
+        var up = d.get("upcoming");
+        if (up instanceof Lang.Array) {
+            _upcoming = filterByDuration(up as Lang.Array<Lang.Dictionary>, maxDuration);
+        } else {
+            _upcoming = [];
+        }
+
+        _scrollOffset = 0;
+        _hasData = true;
+        _loading = false;
+        _error   = "";
     }
 
     function onUpdate(dc as Graphics.Dc) as Void {
