@@ -113,8 +113,10 @@ class GarminBadgesView extends ScrollableView {
             _upcoming = [];
         }
 
-        _scrollOffset        = 0;
-        _selectedUpcomingIdx = -1;
+        if (!_hasData) {
+            _scrollOffset        = 0;
+            _selectedUpcomingIdx = -1;
+        }
         _hasData = true;
         _loading = false;
         _error   = "";
