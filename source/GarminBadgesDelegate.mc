@@ -17,7 +17,7 @@ class GarminBadgesDelegate extends ScrollDelegate {
     }
 
     // SELECT button / tap — open the all-challenges page when scrolled to the
-    // "MORE" row
+    // "MORE" row, otherwise open the detail page for the selected challenge
     function onSelect() as Lang.Boolean {
         if (_view.atMoreRow()) {
             // Cancel any pending menu-hold timer so it doesn't fire onMenu()
@@ -30,15 +30,28 @@ class GarminBadgesDelegate extends ScrollDelegate {
             _view.showAllChallenges();
             return true;
         }
+
+        var challenge = _view.challengeAt(_view.viewportTop());
+        if (challenge != null) {
+            _view.showChallengeDetail(challenge);
+            return true;
+        }
         return false;
     }
 
-    // Touch tap on the menu icon (top-right corner) — show the options menu
+    // Touch tap on the menu icon (top-right corner) — show the options menu;
+    // tap on a challenge row — open its detail page
     function onTap(clickEvent as WatchUi.ClickEvent) as Lang.Boolean {
         var coords   = clickEvent.getCoordinates();
         var settings = System.getDeviceSettings();
         if (BadgeFormat.isMenuIconHit(coords[0], coords[1], settings.screenWidth, settings.screenHeight)) {
             return onMenu();
+        }
+
+        var challenge = _view.challengeAt(coords[1]);
+        if (challenge != null) {
+            _view.showChallengeDetail(challenge);
+            return true;
         }
         return false;
     }

@@ -51,6 +51,9 @@ class GarminBadgesAllChallengesView extends ScrollableView {
         var rowHeightPx   = (h * ROW_HEIGHT_FRAC).toNumber();
         var contentHeight = count * rowHeightPx;
 
+        _viewportTop = viewportTop;
+        _rowHeightPx = rowHeightPx;
+
         _maxScroll = contentHeight - viewportHeight;
         if (_maxScroll < 0) {
             _maxScroll = 0;
@@ -75,5 +78,15 @@ class GarminBadgesAllChallengesView extends ScrollableView {
         dc.clearClip();
 
         BadgeFormat.drawScrollIndicator(dc, w, h, viewportTop, viewportHeight, contentHeight, _scrollOffset, _maxScroll);
+    }
+
+    // Returns the challenge at screen y-coordinate, or null if y is outside
+    // the list.
+    function challengeAt(y as Lang.Number) as Lang.Dictionary? {
+        var idx = rowIndexAt(y);
+        if (idx < 0 || idx >= _challenges.size()) {
+            return null;
+        }
+        return _challenges[idx] as Lang.Dictionary;
     }
 }

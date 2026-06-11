@@ -21,6 +21,59 @@ module BadgeFormat {
         return s;
     }
 
+    // Splits text on spaces. Lang.String has no split() in this API.
+    function splitWords(text as Lang.String) as Lang.Array<Lang.String> {
+        var words     = [] as Lang.Array<Lang.String>;
+        var remaining = text;
+
+        while (true) {
+            var idx = remaining.find(" ");
+            if (idx == null) {
+                if (remaining.length() > 0) {
+                    words.add(remaining);
+                }
+                break;
+            }
+
+            var word = remaining.substring(0, idx) as Lang.String;
+            if (word.length() > 0) {
+                words.add(word);
+            }
+            remaining = remaining.substring(idx + 1, remaining.length()) as Lang.String;
+        }
+
+        return words;
+    }
+
+    // Greedily groups whole words into lines, each line's pixel width
+    // <= maxWidth.
+    function wrapText(dc as Graphics.Dc, text as Lang.String, font as Graphics.FontDefinition, maxWidth as Lang.Number) as Lang.Array<Lang.String> {
+        var words   = splitWords(text);
+        var lines   = [] as Lang.Array<Lang.String>;
+        var current = "";
+
+        for (var i = 0; i < words.size(); i += 1) {
+            var word      = words[i] as Lang.String;
+            var candidate = current.equals("") ? word : current + " " + word;
+
+            if (current.equals("") || dc.getTextWidthInPixels(candidate, font) <= maxWidth) {
+                current = candidate;
+            } else {
+                lines.add(current);
+                current = word;
+            }
+        }
+
+        if (!current.equals("")) {
+            lines.add(current);
+        }
+        if (lines.size() == 0) {
+            lines.add(text);
+        }
+
+        return lines;
+    }
+
     // JSON numbers without a fractional part decode as Lang.Number, and some
     // decimals decode as Lang.Double rather than Lang.Float — convert
     // explicitly so arithmetic doesn't truncate or fall through to default.

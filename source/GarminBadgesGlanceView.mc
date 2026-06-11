@@ -198,59 +198,6 @@ class GarminBadgesGlanceView extends WatchUi.GlanceView {
         _error   = "";
     }
 
-    // Splits text on spaces. Lang.String has no split() in this API.
-    private function splitWords(text as Lang.String) as Lang.Array<Lang.String> {
-        var words     = [] as Lang.Array<Lang.String>;
-        var remaining = text;
-
-        while (true) {
-            var idx = remaining.find(" ");
-            if (idx == null) {
-                if (remaining.length() > 0) {
-                    words.add(remaining);
-                }
-                break;
-            }
-
-            var word = remaining.substring(0, idx) as Lang.String;
-            if (word.length() > 0) {
-                words.add(word);
-            }
-            remaining = remaining.substring(idx + 1, remaining.length()) as Lang.String;
-        }
-
-        return words;
-    }
-
-    // Greedily groups whole words into "pages" that each fit within
-    // maxWidth, for the page-flip ticker.
-    private function splitIntoPages(dc as Graphics.Dc, text as Lang.String, font as Graphics.FontDefinition, maxWidth as Lang.Number) as Lang.Array<Lang.String> {
-        var words   = splitWords(text);
-        var pages   = [] as Lang.Array<Lang.String>;
-        var current = "";
-
-        for (var i = 0; i < words.size(); i += 1) {
-            var word      = words[i] as Lang.String;
-            var candidate = current.equals("") ? word : current + " " + word;
-
-            if (current.equals("") || dc.getTextWidthInPixels(candidate, font) <= maxWidth) {
-                current = candidate;
-            } else {
-                pages.add(current);
-                current = word;
-            }
-        }
-
-        if (!current.equals("")) {
-            pages.add(current);
-        }
-        if (pages.size() == 0) {
-            pages.add(text);
-        }
-
-        return pages;
-    }
-
     function onUpdate(dc as Graphics.Dc) as Void {
         var w = dc.getWidth();
         var h = dc.getHeight();
@@ -282,7 +229,7 @@ class GarminBadgesGlanceView extends WatchUi.GlanceView {
         if (textWidth <= w) {
             dc.drawText(w / 2, titleY, font, _title, justify);
         } else {
-            var pages     = splitIntoPages(dc, _title, font, w);
+            var pages     = BadgeFormat.wrapText(dc, _title, font, w);
             var pageIndex = (_tickCount / PAGE_DURATION_TICKS) % pages.size();
             dc.drawText(w / 2, titleY, font, pages[pageIndex] as Lang.String, justify);
         }

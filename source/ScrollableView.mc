@@ -8,6 +8,8 @@ class ScrollableView extends WatchUi.View {
 
     protected var _scrollOffset as Lang.Number = 0;
     protected var _maxScroll    as Lang.Number = 0;
+    protected var _viewportTop  as Lang.Number = 0;
+    protected var _rowHeightPx  as Lang.Number = 0;
 
     protected const ROW_HEIGHT_FRAC = 0.255;
 
@@ -24,6 +26,27 @@ class ScrollableView extends WatchUi.View {
 
     function onHide() as Void {
         stopMomentum();
+    }
+
+    // Top of the scrollable list, in screen y-coordinates.
+    function viewportTop() as Lang.Number {
+        return _viewportTop;
+    }
+
+    // Index of the row at screen y-coordinate, or -1 if y is above the
+    // viewport.
+    function rowIndexAt(y as Lang.Number) as Lang.Number {
+        if (y < _viewportTop) {
+            return -1;
+        }
+        return ((y - _viewportTop + _scrollOffset) / _rowHeightPx).toNumber();
+    }
+
+    // Pushes the detail page for the given challenge.
+    function showChallengeDetail(badge as Lang.Dictionary) as Void {
+        var view     = new GarminBadgesChallengeDetailView(badge);
+        var delegate = new WatchUi.BehaviorDelegate();
+        WatchUi.pushView(view, delegate, WatchUi.SLIDE_LEFT);
     }
 
     function scrollBy(deltaPx as Lang.Number) as Void {

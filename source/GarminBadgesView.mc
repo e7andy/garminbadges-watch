@@ -219,6 +219,9 @@ class GarminBadgesView extends ScrollableView {
         var totalRows    = displayCount + (hasMore ? 1 : 0);
         var contentHeight = totalRows * rowHeightPx;
 
+        _viewportTop = viewportTop;
+        _rowHeightPx = rowHeightPx;
+
         _maxScroll = contentHeight - viewportHeight;
         if (_maxScroll < 0) {
             _maxScroll = 0;
@@ -262,6 +265,25 @@ class GarminBadgesView extends ScrollableView {
     // True when the list is scrolled all the way down to the "MORE" row.
     function atMoreRow() as Lang.Boolean {
         return hasMoreChallenges() && _maxScroll > 0 && _scrollOffset >= _maxScroll;
+    }
+
+    // Returns the challenge at screen y-coordinate, or null if y is on the
+    // "MORE" row, outside the list, or there's no challenge there.
+    function challengeAt(y as Lang.Number) as Lang.Dictionary? {
+        var idx = rowIndexAt(y);
+        if (idx < 0 || idx >= _challenges.size()) {
+            return null;
+        }
+
+        var displayCount = _challenges.size();
+        if (displayCount > 5) {
+            displayCount = 5;
+        }
+        if (idx >= displayCount) {
+            return null; // "MORE" row or beyond
+        }
+
+        return _challenges[idx] as Lang.Dictionary;
     }
 
     // Push the "all challenges" page, sorted most-urgent first.
