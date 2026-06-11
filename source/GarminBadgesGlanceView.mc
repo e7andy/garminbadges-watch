@@ -19,11 +19,14 @@ class GarminBadgesGlanceView extends WatchUi.GlanceView {
     private var _ratio     as Lang.Float   = 0.0;
     private var _barColor  as Lang.Number  = BadgeFormat.RED;
 
-    private var _scrollX as Lang.Number = 0;
-    private var _timer   as Timer.Timer?;
+    private var _tickCount as Lang.Number = 0;
+    private var _timer     as Timer.Timer?;
 
-    private const SCROLL_STEP_PX = 6;
-    private const SCROLL_GAP_PX  = 30;
+    // Glance timers are clamped to a 1Hz minimum interval by the platform,
+    // so a long title is shown as a page-flip ticker (alternating chunks of
+    // whole words) rather than a smooth scroll.
+    private const TICKER_TICK_MS      = 1000;
+    private const PAGE_DURATION_TICKS = 2;
 
     function initialize() {
         GlanceView.initialize();
@@ -38,8 +41,13 @@ class GarminBadgesGlanceView extends WatchUi.GlanceView {
             applyData(cached);
         }
         fetchData();
+
+        if (_timer != null) {
+            _timer.stop();
+        }
+        _tickCount = 0;
         _timer = new Timer.Timer();
-        _timer.start(method(:onTimer), 1000, true);
+        _timer.start(method(:onTimer), TICKER_TICK_MS, true);
     }
 
     function onHide() as Void {
@@ -50,7 +58,7 @@ class GarminBadgesGlanceView extends WatchUi.GlanceView {
     }
 
     function onTimer() as Void {
-        _scrollX += SCROLL_STEP_PX;
+        _tickCount += 1;
         WatchUi.requestUpdate();
     }
 
@@ -190,6 +198,59 @@ class GarminBadgesGlanceView extends WatchUi.GlanceView {
         _error   = "";
     }
 
+    // Splits text on spaces. Lang.String has no split() in this API.
+    private function splitWords(text as Lang.String) as Lang.Array<Lang.String> {
+        var words     = [] as Lang.Array<Lang.String>;
+        var remaining = text;
+
+        while (true) {
+            var idx = remaining.find(" ");
+            if (idx == null) {
+                if (remaining.length() > 0) {
+                    words.add(remaining);
+                }
+                break;
+            }
+
+            var word = remaining.substring(0, idx) as Lang.String;
+            if (word.length() > 0) {
+                words.add(word);
+            }
+            remaining = remaining.substring(idx + 1, remaining.length()) as Lang.String;
+        }
+
+        return words;
+    }
+
+    // Greedily groups whole words into "pages" that each fit within
+    // maxWidth, for the page-flip ticker.
+    private function splitIntoPages(dc as Graphics.Dc, text as Lang.String, font as Graphics.FontDefinition, maxWidth as Lang.Number) as Lang.Array<Lang.String> {
+        var words   = splitWords(text);
+        var pages   = [] as Lang.Array<Lang.String>;
+        var current = "";
+
+        for (var i = 0; i < words.size(); i += 1) {
+            var word      = words[i] as Lang.String;
+            var candidate = current.equals("") ? word : current + " " + word;
+
+            if (current.equals("") || dc.getTextWidthInPixels(candidate, font) <= maxWidth) {
+                current = candidate;
+            } else {
+                pages.add(current);
+                current = word;
+            }
+        }
+
+        if (!current.equals("")) {
+            pages.add(current);
+        }
+        if (pages.size() == 0) {
+            pages.add(text);
+        }
+
+        return pages;
+    }
+
     function onUpdate(dc as Graphics.Dc) as Void {
         var w = dc.getWidth();
         var h = dc.getHeight();
@@ -198,9 +259,7 @@ class GarminBadgesGlanceView extends WatchUi.GlanceView {
         dc.clear();
 
         var justify = Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER;
-        // FONT_SYSTEM_XTINY (unlike FONT_XTINY) follows the device's "Text
-        // Size" accessibility setting.
-        var font    = Graphics.FONT_SYSTEM_XTINY;
+        var font    = BadgeFormat.glanceFont();
 
         if (_loading) {
             dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
@@ -214,7 +273,8 @@ class GarminBadgesGlanceView extends WatchUi.GlanceView {
             return;
         }
 
-        // Line 1: title, scrolling marquee if it doesn't fit
+        // Line 1: title, page-flip ticker (alternating chunks of whole
+        // words every PAGE_DURATION_TICKS) if it doesn't fit
         var titleY    = (h * 0.22).toNumber();
         var textWidth = dc.getTextWidthInPixels(_title, font);
 
@@ -222,15 +282,9 @@ class GarminBadgesGlanceView extends WatchUi.GlanceView {
         if (textWidth <= w) {
             dc.drawText(w / 2, titleY, font, _title, justify);
         } else {
-            var period = textWidth + SCROLL_GAP_PX;
-            var x      = -(_scrollX % period);
-
-            dc.setClip(0, 0, w, (h * 0.45).toNumber());
-            dc.drawText(x, titleY, font, _title,
-                Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
-            dc.drawText(x + period, titleY, font, _title,
-                Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
-            dc.clearClip();
+            var pages     = splitIntoPages(dc, _title, font, w);
+            var pageIndex = (_tickCount / PAGE_DURATION_TICKS) % pages.size();
+            dc.drawText(w / 2, titleY, font, pages[pageIndex] as Lang.String, justify);
         }
 
         // Middle: progress bar for the closest challenge (empty if the

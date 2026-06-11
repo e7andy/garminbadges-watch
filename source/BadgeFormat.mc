@@ -40,6 +40,17 @@ module BadgeFormat {
         return defaultVal;
     }
 
+    // FONT_SYSTEM_TINY if the device's "Text Size" setting is scaled up
+    // (DeviceSettings.fontScale, API 5.0.1+), otherwise FONT_SYSTEM_XTINY.
+    // Devices without fontScale always get FONT_SYSTEM_XTINY.
+    function glanceFont() as Graphics.FontDefinition {
+        var settings = System.getDeviceSettings();
+        if ((settings has :fontScale) && settings.fontScale != null && settings.fontScale > 1.0) {
+            return Graphics.FONT_SYSTEM_TINY;
+        }
+        return Graphics.FONT_SYSTEM_XTINY;
+    }
+
     // "Today" if daysUntil <= 0, otherwise "Nd".
     function formatDaysUntil(daysUntil as Lang.Number) as Lang.String {
         return (daysUntil <= 0) ? "Today" : (daysUntil.toString() + "d");
