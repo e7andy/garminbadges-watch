@@ -53,7 +53,7 @@ class GarminBadgesChallengeDetailView extends WatchUi.View {
 
         // Name (wrapped, up to a few lines)
         var nameLines  = BadgeFormat.wrapText(dc, nameStr, Graphics.FONT_SMALL, (w * 0.9).toNumber());
-        var lineHeight = (h * 0.07).toNumber();
+        var lineHeight = dc.getFontHeight(Graphics.FONT_SMALL);
         var nameTop    = (h * 0.16).toNumber();
         dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
         for (var i = 0; i < nameLines.size(); i += 1) {
@@ -61,6 +61,10 @@ class GarminBadgesChallengeDetailView extends WatchUi.View {
         }
 
         var contentTop = nameTop + nameLines.size() * lineHeight + (h * 0.03).toNumber();
+
+        var smallFontHeight = dc.getFontHeight(Graphics.FONT_SMALL);
+        var xtinyFontHeight = dc.getFontHeight(Graphics.FONT_XTINY);
+        var textGap         = (h * 0.02).toNumber();
 
         var daysColor = BadgeFormat.GRAY;
         if (daysBehindVal >= 0.5) {
@@ -94,15 +98,17 @@ class GarminBadgesChallengeDetailView extends WatchUi.View {
                 (ratio * 100).toNumber().toString() + "%", justify);
 
             // Fraction
+            var fractionY = barTop + barHeight + textGap + smallFontHeight / 2;
             dc.setColor(BadgeFormat.GRAY, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(cx, barTop + barHeight + (h * 0.06).toNumber(), Graphics.FONT_SMALL,
+            dc.drawText(cx, fractionY, Graphics.FONT_SMALL,
                 BadgeFormat.formatFraction(progressVal, targetVal, unitStr), justify);
 
-            contentTop = barTop + barHeight + (h * 0.13).toNumber();
+            contentTop = fractionY + smallFontHeight + textGap;
         } else {
+            var noTargetY = contentTop + textGap + smallFontHeight / 2;
             dc.setColor(BadgeFormat.GRAY, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(cx, contentTop + (h * 0.04).toNumber(), Graphics.FONT_SMALL, "No target", justify);
-            contentTop += (h * 0.10).toNumber();
+            dc.drawText(cx, noTargetY, Graphics.FONT_SMALL, "No target", justify);
+            contentTop = noTargetY + smallFontHeight + textGap;
         }
 
         // Days behind/ahead schedule, or days until start
@@ -124,8 +130,9 @@ class GarminBadgesChallengeDetailView extends WatchUi.View {
 
         // Duration
         if (durationVal > 0) {
+            var durationY = contentTop + smallFontHeight / 2 + textGap + xtinyFontHeight / 2;
             dc.setColor(BadgeFormat.GRAY, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(cx, contentTop + (h * 0.08).toNumber(), Graphics.FONT_XTINY,
+            dc.drawText(cx, durationY, Graphics.FONT_XTINY,
                 durationVal.toString() + "-day challenge", justify);
         }
     }

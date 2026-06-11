@@ -42,7 +42,7 @@ class GarminBadgesUpcomingDetailView extends WatchUi.View {
 
         // Name (wrapped, up to a few lines)
         var nameLines  = BadgeFormat.wrapText(dc, nameStr, Graphics.FONT_SMALL, (w * 0.9).toNumber());
-        var lineHeight = (h * 0.07).toNumber();
+        var lineHeight = dc.getFontHeight(Graphics.FONT_SMALL);
         var nameTop    = (h * 0.2).toNumber();
         dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
         for (var i = 0; i < nameLines.size(); i += 1) {
@@ -51,13 +51,18 @@ class GarminBadgesUpcomingDetailView extends WatchUi.View {
 
         var contentTop = nameTop + nameLines.size() * lineHeight + (h * 0.06).toNumber();
 
+        var smallFontHeight = dc.getFontHeight(Graphics.FONT_SMALL);
+        var xtinyFontHeight = dc.getFontHeight(Graphics.FONT_XTINY);
+        var textGap         = (h * 0.02).toNumber();
+
         // Starts in
         dc.setColor(BadgeFormat.GRAY, Graphics.COLOR_TRANSPARENT);
         dc.drawText(cx, contentTop, Graphics.FONT_SMALL, "Starts " + BadgeFormat.formatDaysUntil(daysUntilVal), justify);
 
         // Duration
         if (durationVal > 0) {
-            dc.drawText(cx, contentTop + (h * 0.08).toNumber(), Graphics.FONT_XTINY,
+            var durationY = contentTop + smallFontHeight / 2 + textGap + xtinyFontHeight / 2;
+            dc.drawText(cx, durationY, Graphics.FONT_XTINY,
                 durationVal.toString() + "-day challenge", justify);
         }
     }
