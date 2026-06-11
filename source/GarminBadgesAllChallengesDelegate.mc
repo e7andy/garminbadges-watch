@@ -15,6 +15,10 @@ class GarminBadgesAllChallengesDelegate extends ScrollDelegate {
     }
 
     function onSelect() as Lang.Boolean {
+        if (!consumeSelectFromButton()) {
+            return false;
+        }
+
         var challenge = _view.challengeAt(_view.viewportTop());
         if (challenge != null) {
             _view.showChallengeDetail(challenge);
@@ -29,6 +33,15 @@ class GarminBadgesAllChallengesDelegate extends ScrollDelegate {
         if (challenge != null) {
             _view.showChallengeDetail(challenge);
             return true;
+        }
+        return false;
+    }
+
+    // Start/Enter button — record so onSelect() knows to act on the
+    // marked/viewportTop() row (see ScrollDelegate.markKeyEnterPressed()).
+    function onKeyPressed(keyEvent as WatchUi.KeyEvent) as Lang.Boolean {
+        if (keyEvent.getKey() == WatchUi.KEY_ENTER) {
+            markKeyEnterPressed();
         }
         return false;
     }

@@ -33,6 +33,11 @@ class ScrollableView extends WatchUi.View {
         return _viewportTop;
     }
 
+    // Height of one row, in pixels, as last computed by onUpdate().
+    function rowHeightPx() as Lang.Number {
+        return _rowHeightPx;
+    }
+
     // Index of the row at screen y-coordinate, or -1 if y is above the
     // viewport.
     function rowIndexAt(y as Lang.Number) as Lang.Number {
@@ -45,6 +50,13 @@ class ScrollableView extends WatchUi.View {
     // Pushes the detail page for the given challenge.
     function showChallengeDetail(badge as Lang.Dictionary) as Void {
         var view     = new GarminBadgesChallengeDetailView(badge);
+        var delegate = new WatchUi.BehaviorDelegate();
+        WatchUi.pushView(view, delegate, WatchUi.SLIDE_LEFT);
+    }
+
+    // Pushes the detail page for the given upcoming badge.
+    function showUpcomingDetail(badge as Lang.Dictionary) as Void {
+        var view     = new GarminBadgesUpcomingDetailView(badge);
         var delegate = new WatchUi.BehaviorDelegate();
         WatchUi.pushView(view, delegate, WatchUi.SLIDE_LEFT);
     }

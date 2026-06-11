@@ -54,13 +54,22 @@ class GarminBadgesAllChallengesView extends ScrollableView {
         _viewportTop = viewportTop;
         _rowHeightPx = rowHeightPx;
 
-        _maxScroll = contentHeight - viewportHeight;
+        // Extra trailing space so the last row can be scrolled all the way
+        // up to the top of the viewport (and thus become selectable).
+        var extraSpace = viewportHeight - rowHeightPx;
+        if (extraSpace < 0) {
+            extraSpace = 0;
+        }
+
+        _maxScroll = contentHeight + extraSpace - viewportHeight;
         if (_maxScroll < 0) {
             _maxScroll = 0;
         }
         if (_scrollOffset > _maxScroll) {
             _scrollOffset = _maxScroll;
         }
+
+        var selectedIdx = rowIndexAt(viewportTop);
 
         dc.setClip(0, viewportTop, w, viewportHeight);
 
@@ -70,6 +79,10 @@ class GarminBadgesAllChallengesView extends ScrollableView {
             // Skip rows fully outside the viewport
             if (rowTop + rowHeightPx <= viewportTop || rowTop >= viewportTop + viewportHeight) {
                 continue;
+            }
+
+            if (i == selectedIdx) {
+                BadgeFormat.drawSelectionMarker(dc, rowTop, rowHeightPx, w);
             }
 
             BadgeFormat.drawChallengeRow(dc, _challenges[i] as Lang.Dictionary, rowTop, w, h, justify);

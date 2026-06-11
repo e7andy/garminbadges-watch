@@ -19,33 +19,51 @@ class GarminBadgesDelegate extends ScrollDelegate {
     // SELECT button / tap — open the all-challenges page when scrolled to the
     // "MORE" row, otherwise open the detail page for the selected challenge
     function onSelect() as Lang.Boolean {
+        if (!consumeSelectFromButton()) {
+            return false;
+        }
+
         if (_view.atMoreRow()) {
             // Cancel any pending menu-hold timer so it doesn't fire onMenu()
             // on top of the page we're about to navigate to (this delegate
             // won't receive the matching onKeyReleased once that happens).
-            if (_menuHoldTimer != null) {
-                _menuHoldTimer.stop();
-                _menuHoldTimer = null;
-            }
+            cancelMenuHoldTimer();
             _view.showAllChallenges();
             return true;
         }
 
         var challenge = _view.challengeAt(_view.viewportTop());
         if (challenge != null) {
+            cancelMenuHoldTimer();
             _view.showChallengeDetail(challenge);
             return true;
         }
         return false;
     }
 
+    // Cancels any pending menu-hold timer so it doesn't fire onMenu() on top
+    // of the page we're about to navigate to (this delegate won't receive the
+    // matching onKeyReleased once that happens).
+    private function cancelMenuHoldTimer() as Void {
+        if (_menuHoldTimer != null) {
+            _menuHoldTimer.stop();
+            _menuHoldTimer = null;
+        }
+    }
+
     // Touch tap on the menu icon (top-right corner) — show the options menu;
-    // tap on a challenge row — open its detail page
+    // tap on an "UPCOMING" or challenge row — open its detail page
     function onTap(clickEvent as WatchUi.ClickEvent) as Lang.Boolean {
         var coords   = clickEvent.getCoordinates();
         var settings = System.getDeviceSettings();
         if (BadgeFormat.isMenuIconHit(coords[0], coords[1], settings.screenWidth, settings.screenHeight)) {
             return onMenu();
+        }
+
+        var upcoming = _view.upcomingAt(coords[1]);
+        if (upcoming != null) {
+            _view.showUpcomingDetail(upcoming);
+            return true;
         }
 
         var challenge = _view.challengeAt(coords[1]);
@@ -59,6 +77,7 @@ class GarminBadgesDelegate extends ScrollDelegate {
     // Holding START/STOP also opens the options menu
     function onKeyPressed(keyEvent as WatchUi.KeyEvent) as Lang.Boolean {
         if (keyEvent.getKey() == WatchUi.KEY_ENTER) {
+            markKeyEnterPressed();
             _menuHoldTimer = new Timer.Timer();
             _menuHoldTimer.start(method(:onMenuHoldTimer), MENU_HOLD_MS, false);
         }

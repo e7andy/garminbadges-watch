@@ -6,10 +6,11 @@ import Toybox.System;
 // all-challenges pages, which use the same row layout.
 module BadgeFormat {
 
-    const RED   = 0xe53935;
-    const GREEN = 0x43a047;
-    const GRAY  = 0x888888;
-    const DIM   = 0x444444;
+    const RED       = 0xe53935;
+    const GREEN     = 0x43a047;
+    const GRAY      = 0x888888;
+    const DIM       = 0x444444;
+    const HIGHLIGHT = 0x2196f3;
 
     const MENU_ICON_SIZE_FRAC   = 0.045;
     const MENU_ICON_MARGIN_FRAC = 0.05;
@@ -246,6 +247,17 @@ module BadgeFormat {
             dc.drawText(cx, (rowTop + h * 0.18 + 0.5).toNumber(), Graphics.FONT_XTINY,
                 "No target", justify);
         }
+    }
+
+    // Draws a vertical accent bar on the left edge of a row, marking it as
+    // the item that SELECT/tap will open the detail view for.
+    function drawSelectionMarker(dc as Graphics.Dc, rowTop as Lang.Number, rowHeight as Lang.Number, w as Lang.Number) as Void {
+        var barWidth = (w * 0.012 + 0.5).toNumber();
+        if (barWidth < 2) {
+            barWidth = 2;
+        }
+        dc.setColor(HIGHLIGHT, Graphics.COLOR_TRANSPARENT);
+        dc.fillRectangle((w * 0.07).toNumber(), rowTop, barWidth, rowHeight);
     }
 
     // Top-left x/y and size (square) of the menu icon's tap target, in the

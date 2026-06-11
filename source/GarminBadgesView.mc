@@ -14,6 +14,10 @@ class GarminBadgesView extends ScrollableView {
     private var _challenges as Lang.Array<Lang.Dictionary> = [];
     private var _upcoming   as Lang.Array<Lang.Dictionary> = [];
 
+    private var _upcomingRowTop    as Lang.Number = 0;
+    private var _upcomingRowHeight as Lang.Number = 0;
+    private var _upcomingCount     as Lang.Number = 0;
+
     function initialize() {
         ScrollableView.initialize();
     }
@@ -156,11 +160,16 @@ class GarminBadgesView extends ScrollableView {
             upcomingCount = 2;
         }
 
+        _upcomingCount = upcomingCount;
+
         if (upcomingCount > 0) {
             // "Upcoming" section
             dc.setColor(BadgeFormat.RED, Graphics.COLOR_TRANSPARENT);
             dc.drawText(cx, (h * 0.06 + 0.5).toNumber(), Graphics.FONT_XTINY,
                 "UPCOMING", justify);
+
+            _upcomingRowTop    = (h * 0.0975).toNumber();
+            _upcomingRowHeight = (h * 0.065).toNumber();
 
             for (var i = 0; i < upcomingCount; i += 1) {
                 var ub      = _upcoming[i] as Lang.Dictionary;
@@ -169,6 +178,8 @@ class GarminBadgesView extends ScrollableView {
 
                 var ubNameStr = (ubName != null) ? ubName as Lang.String : "";
                 var ubDaysNum = (ubDays != null) ? ubDays as Lang.Number : 0;
+
+                BadgeFormat.drawSelectionMarker(dc, _upcomingRowTop + i * _upcomingRowHeight, _upcomingRowHeight, w);
 
                 dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
                 dc.drawText(cx, (h * (0.13 + i * 0.065) + 0.5).toNumber(), Graphics.FONT_XTINY,
@@ -222,13 +233,22 @@ class GarminBadgesView extends ScrollableView {
         _viewportTop = viewportTop;
         _rowHeightPx = rowHeightPx;
 
-        _maxScroll = contentHeight - viewportHeight;
+        // Extra trailing space so the last row can be scrolled all the way
+        // up to the top of the viewport (and thus become selectable).
+        var extraSpace = viewportHeight - rowHeightPx;
+        if (extraSpace < 0) {
+            extraSpace = 0;
+        }
+
+        _maxScroll = contentHeight + extraSpace - viewportHeight;
         if (_maxScroll < 0) {
             _maxScroll = 0;
         }
         if (_scrollOffset > _maxScroll) {
             _scrollOffset = _maxScroll;
         }
+
+        var selectedIdx = rowIndexAt(viewportTop);
 
         dc.setClip(0, viewportTop, w, viewportHeight);
 
@@ -246,6 +266,10 @@ class GarminBadgesView extends ScrollableView {
                 dc.drawText(cx, (rowTop + rowHeightPx / 2).toNumber(), Graphics.FONT_XTINY,
                     "MORE", justify);
                 continue;
+            }
+
+            if (i == selectedIdx) {
+                BadgeFormat.drawSelectionMarker(dc, rowTop, rowHeightPx, w);
             }
 
             BadgeFormat.drawChallengeRow(dc, _challenges[i] as Lang.Dictionary, rowTop, w, h, justify);
@@ -284,6 +308,21 @@ class GarminBadgesView extends ScrollableView {
         }
 
         return _challenges[idx] as Lang.Dictionary;
+    }
+
+    // Returns the upcoming badge at screen y-coordinate, or null if y is
+    // outside the "UPCOMING" rows.
+    function upcomingAt(y as Lang.Number) as Lang.Dictionary? {
+        if (_upcomingCount == 0 || y < _upcomingRowTop) {
+            return null;
+        }
+
+        var idx = (y - _upcomingRowTop) / _upcomingRowHeight;
+        if (idx < 0 || idx >= _upcomingCount) {
+            return null;
+        }
+
+        return _upcoming[idx] as Lang.Dictionary;
     }
 
     // Push the "all challenges" page, sorted most-urgent first.

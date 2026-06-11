@@ -5,25 +5,47 @@ import Toybox.WatchUi;
 // scrolling for GarminBadgesDelegate and GarminBadgesAllChallengesDelegate.
 class ScrollDelegate extends WatchUi.BehaviorDelegate {
 
-    private var _scrollView as ScrollableView;
-    private var _lastDragY  as Lang.Number?;
-
-    private const SCROLL_STEP = 40;
+    private var _scrollView        as ScrollableView;
+    private var _lastDragY         as Lang.Number?;
+    private var _selectFromButton  as Lang.Boolean = false;
 
     function initialize(view as ScrollableView) {
         BehaviorDelegate.initialize();
         _scrollView = view;
     }
 
-    // DOWN button — scroll list down
+    // Call from onKeyPressed() when KEY_ENTER is pressed. KEY_ENTER is
+    // pressed before onSelect() is translated for a Start/Enter button press
+    // (but never for a touchscreen tap), letting onSelect() tell the two
+    // apart.
+    protected function markKeyEnterPressed() as Void {
+        _selectFromButton = true;
+    }
+
+    // onSelect() implementations must check this first and return false
+    // (without acting) if it returns false. A true result means this
+    // onSelect() follows a Start/Enter press (see markKeyEnterPressed()), so
+    // it should act on the marked/viewportTop() row. A false result means
+    // onSelect() is the system's coordinate-less translation of a touchscreen
+    // tap; returning false lets the system fall back to calling
+    // onTap(clickEvent), which has the tap coordinates.
+    protected function consumeSelectFromButton() as Lang.Boolean {
+        if (_selectFromButton) {
+            _selectFromButton = false;
+            return true;
+        }
+        return false;
+    }
+
+    // DOWN button — scroll list down by one item
     function onNextPage() as Lang.Boolean {
-        _scrollView.scrollBy(SCROLL_STEP);
+        _scrollView.scrollBy(_scrollView.rowHeightPx());
         return true;
     }
 
-    // UP button — scroll list up
+    // UP button — scroll list up by one item
     function onPreviousPage() as Lang.Boolean {
-        _scrollView.scrollBy(-SCROLL_STEP);
+        _scrollView.scrollBy(-_scrollView.rowHeightPx());
         return true;
     }
 
