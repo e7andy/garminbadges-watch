@@ -53,9 +53,9 @@ Until the app is published, sideloaded builds can't show a Settings screen in Ga
 3. **Build a release package** covering all supported devices (the full `<iq:products>` list in `manifest.xml`), with debug info stripped:
    ```powershell
    $SDK = "C:\Users\e7and\AppData\Roaming\Garmin\ConnectIQ\Sdks\connectiq-sdk-win-9.2.0-2026-06-09-92a1605b2"
-   & "$SDK\bin\monkeyc.bat" -f jungle.xml -d fenix6,fenix6pro,fenix6s,fenix6spro,fenix6xpro,fenix7,fenix7pro,fenix7pronowifi,fenix7s,fenix7spro,fenix7x,fenix7xpro,fenix7xpronowifi,fenix843mm,fenix847mm,fenix8pro47mm,fenix8solar47mm,fenix8solar51mm,fenixe,epix2,epix2pro42mm,epix2pro47mm,epix2pro51mm,enduro,enduro3,venu2,venu2plus,venu2s,venu3,venu3s,vivoactive4,vivoactive4s,vivoactive5,vivoactive6,fr245,fr245m,fr255,fr255m,fr255s,fr255sm,fr265,fr265s,fr745,fr945,fr945lte,fr955,fr965,fr970,fr57042mm,fr57047mm,instinct2,instinct2s,instinct2x,instinct3amoled45mm,instinct3amoled50mm,instinct3solar45mm,marq2,marq2aviator -o bin\GarminBadges.iq -y "C:\Users\e7and\My Drive\Backup\garmin\developer_key" -e -r
+   & "$SDK\bin\monkeyc.bat" -f jungle.xml -o bin\GarminBadges.iq -y "C:\Users\e7and\My Drive\Backup\garmin\developer_key" -e -r
    ```
-   `-e`/`--package-app` produces an `.iq` store package (instead of a single-device `.prg`); `-r`/`--release` strips debug info.
+   `-e`/`--package-app` produces an `.iq` store package (instead of a single-device `.prg`); `-r`/`--release` strips debug info. Omit `-d` — `-d` doesn't accept a comma-separated device list in this SDK version, so leaving it out builds for every device in `manifest.xml`'s `<iq:products>` automatically (prints "N OUT OF 101 DEVICES BUILT" progress).
 4. **Upload `bin/GarminBadges.iq`** to the app listing via the Developer Portal's "Upload App" / App Versions tab.
 5. **Fill in store listing details**: name, description, category, supported devices (should match `manifest.xml`), screenshots, app store icon, and a privacy policy URL — use `https://garminbadges.com/privacy`. See "Store listing content" and "Required images" below.
 6. **Submit for review.** Garmin reviews submissions (can take days). Once approved and published, users install via the Connect IQ Store / Garmin Connect Mobile app, and Connect Mobile's Settings screen will work (pulling `ApiKey`/`ApiUrl`/`MaxDurationDays` from the now-registered schema).
