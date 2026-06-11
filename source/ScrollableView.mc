@@ -47,6 +47,11 @@ class ScrollableView extends WatchUi.View {
         return ((y - _viewportTop + _scrollOffset) / _rowHeightPx).toNumber();
     }
 
+    // True if the list is scrolled all the way to the top.
+    function isScrolledToTop() as Lang.Boolean {
+        return _scrollOffset == 0;
+    }
+
     // Pushes the detail page for the given challenge.
     function showChallengeDetail(badge as Lang.Dictionary) as Void {
         var view     = new GarminBadgesChallengeDetailView(badge);

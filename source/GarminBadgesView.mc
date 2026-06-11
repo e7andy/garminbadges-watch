@@ -14,9 +14,10 @@ class GarminBadgesView extends ScrollableView {
     private var _challenges as Lang.Array<Lang.Dictionary> = [];
     private var _upcoming   as Lang.Array<Lang.Dictionary> = [];
 
-    private var _upcomingRowTop    as Lang.Number = 0;
-    private var _upcomingRowHeight as Lang.Number = 0;
-    private var _upcomingCount     as Lang.Number = 0;
+    private var _upcomingRowTop      as Lang.Number = 0;
+    private var _upcomingRowHeight   as Lang.Number = 0;
+    private var _upcomingCount       as Lang.Number = 0;
+    private var _selectedUpcomingIdx as Lang.Number = -1;
 
     function initialize() {
         ScrollableView.initialize();
@@ -112,7 +113,8 @@ class GarminBadgesView extends ScrollableView {
             _upcoming = [];
         }
 
-        _scrollOffset = 0;
+        _scrollOffset        = 0;
+        _selectedUpcomingIdx = -1;
         _hasData = true;
         _loading = false;
         _error   = "";
@@ -179,7 +181,9 @@ class GarminBadgesView extends ScrollableView {
                 var ubNameStr = (ubName != null) ? ubName as Lang.String : "";
                 var ubDaysNum = (ubDays != null) ? ubDays as Lang.Number : 0;
 
-                BadgeFormat.drawSelectionMarker(dc, _upcomingRowTop + i * _upcomingRowHeight, _upcomingRowHeight, w);
+                if (_selectedUpcomingIdx == i) {
+                    BadgeFormat.drawSelectionMarker(dc, _upcomingRowTop + i * _upcomingRowHeight, _upcomingRowHeight, w);
+                }
 
                 dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
                 dc.drawText(cx, (h * (0.13 + i * 0.065) + 0.5).toNumber(), Graphics.FONT_XTINY,
@@ -268,7 +272,7 @@ class GarminBadgesView extends ScrollableView {
                 continue;
             }
 
-            if (i == selectedIdx) {
+            if (_selectedUpcomingIdx == -1 && i == selectedIdx) {
                 BadgeFormat.drawSelectionMarker(dc, rowTop, rowHeightPx, w);
             }
 
@@ -308,6 +312,29 @@ class GarminBadgesView extends ScrollableView {
         }
 
         return _challenges[idx] as Lang.Dictionary;
+    }
+
+    // Number of "UPCOMING" rows shown (0-2).
+    function upcomingCount() as Lang.Number {
+        return _upcomingCount;
+    }
+
+    // Index of the "UPCOMING" row currently selected via UP/DOWN, or -1 if
+    // none (i.e. a challenge row is selected instead).
+    function selectedUpcomingIndex() as Lang.Number {
+        return _selectedUpcomingIdx;
+    }
+
+    function setSelectedUpcomingIndex(idx as Lang.Number) as Void {
+        _selectedUpcomingIdx = idx;
+    }
+
+    // Returns the upcoming badge at the given index, or null if out of range.
+    function upcomingBadgeAt(idx as Lang.Number) as Lang.Dictionary? {
+        if (idx < 0 || idx >= _upcoming.size()) {
+            return null;
+        }
+        return _upcoming[idx] as Lang.Dictionary;
     }
 
     // Returns the upcoming badge at screen y-coordinate, or null if y is

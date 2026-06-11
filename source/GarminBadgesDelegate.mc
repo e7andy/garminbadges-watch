@@ -23,6 +23,16 @@ class GarminBadgesDelegate extends ScrollDelegate {
             return false;
         }
 
+        var selUp = _view.selectedUpcomingIndex();
+        if (selUp >= 0) {
+            var upcoming = _view.upcomingBadgeAt(selUp);
+            if (upcoming != null) {
+                cancelMenuHoldTimer();
+                _view.showUpcomingDetail(upcoming);
+                return true;
+            }
+        }
+
         if (_view.atMoreRow()) {
             // Cancel any pending menu-hold timer so it doesn't fire onMenu()
             // on top of the page we're about to navigate to (this delegate
@@ -39,6 +49,49 @@ class GarminBadgesDelegate extends ScrollDelegate {
             return true;
         }
         return false;
+    }
+
+    // DOWN button — move the "UPCOMING" selection forward, or once past the
+    // last upcoming row, scroll the challenges list down by one row.
+    function onNextPage() as Lang.Boolean {
+        var upCount = _view.upcomingCount();
+        var selUp   = _view.selectedUpcomingIndex();
+
+        if (selUp >= 0) {
+            if (selUp < upCount - 1) {
+                _view.setSelectedUpcomingIndex(selUp + 1);
+            } else {
+                _view.setSelectedUpcomingIndex(-1);
+            }
+            WatchUi.requestUpdate();
+            return true;
+        }
+
+        _view.scrollBy(_view.rowHeightPx());
+        return true;
+    }
+
+    // UP button — scroll the challenges list up by one row, or once at the
+    // top, move into the "UPCOMING" selection.
+    function onPreviousPage() as Lang.Boolean {
+        var upCount = _view.upcomingCount();
+        var selUp   = _view.selectedUpcomingIndex();
+
+        if (selUp == -1) {
+            if (upCount > 0 && _view.isScrolledToTop()) {
+                _view.setSelectedUpcomingIndex(upCount - 1);
+                WatchUi.requestUpdate();
+                return true;
+            }
+            _view.scrollBy(-_view.rowHeightPx());
+            return true;
+        }
+
+        if (selUp > 0) {
+            _view.setSelectedUpcomingIndex(selUp - 1);
+            WatchUi.requestUpdate();
+        }
+        return true;
     }
 
     // Cancels any pending menu-hold timer so it doesn't fire onMenu() on top
