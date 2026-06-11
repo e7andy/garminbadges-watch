@@ -27,6 +27,8 @@ class GarminBadgesView extends ScrollableView {
     }
 
     function onShow() as Void {
+        ScrollableView.onShow();
+
         var cached = BadgeCache.load();
         if (cached != null) {
             applyData(cached);
@@ -189,9 +191,13 @@ class GarminBadgesView extends ScrollableView {
                     BadgeFormat.drawSelectionMarker(dc, ubRowTop, _upcomingRowHeight, w);
                 }
 
+                var ubY       = (h * (0.13 + i * 0.065) + 0.5).toNumber();
+                var ubText    = ubNameStr + " " + BadgeFormat.formatDaysUntil(ubDaysNum);
+                var ubMaxWidth = BadgeFormat.textMaxWidth(w, h, ubY);
+
                 dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
-                dc.drawText(cx, (h * (0.13 + i * 0.065) + 0.5).toNumber(), Graphics.FONT_XTINY,
-                    BadgeFormat.trim(ubNameStr, 16) + " " + BadgeFormat.formatDaysUntil(ubDaysNum), justify);
+                dc.drawText(cx, ubY, Graphics.FONT_XTINY,
+                    BadgeFormat.pagedText(dc, ubText, Graphics.FONT_XTINY, ubMaxWidth, _tickCount), justify);
             }
 
             var afterUpcomingY = 0.13 + upcomingCount * 0.065;
@@ -285,7 +291,7 @@ class GarminBadgesView extends ScrollableView {
                 BadgeFormat.drawSelectionMarker(dc, rowTop, rowHeightPx, w);
             }
 
-            BadgeFormat.drawChallengeRow(dc, _challenges[i] as Lang.Dictionary, rowTop, w, h, justify);
+            BadgeFormat.drawChallengeRow(dc, _challenges[i] as Lang.Dictionary, rowTop, w, h, justify, _tickCount);
         }
 
         dc.clearClip();

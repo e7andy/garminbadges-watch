@@ -20,12 +20,37 @@ class ScrollableView extends WatchUi.View {
     private const MOMENTUM_MIN_VELOCITY = 10.0;
     private const MOMENTUM_TICK_MS      = 50;
 
+    // Drives the page-flip ticker for row names too wide to fit (see
+    // BadgeFormat.pagedText()).
+    protected var _tickCount as Lang.Number = 0;
+    private var _tickerTimer as Timer.Timer?;
+
     function initialize() {
         View.initialize();
     }
 
+    function onShow() as Void {
+        _tickCount   = 0;
+        _tickerTimer = new Timer.Timer();
+        _tickerTimer.start(method(:onTickerTimer), BadgeFormat.TICKER_TICK_MS, true);
+    }
+
     function onHide() as Void {
         stopMomentum();
+        if (_tickerTimer != null) {
+            _tickerTimer.stop();
+            _tickerTimer = null;
+        }
+    }
+
+    function onTickerTimer() as Void {
+        _tickCount += 1;
+        WatchUi.requestUpdate();
+    }
+
+    // Current tick count, for BadgeFormat.pagedText().
+    function tickCount() as Lang.Number {
+        return _tickCount;
     }
 
     // Top of the scrollable list, in screen y-coordinates.

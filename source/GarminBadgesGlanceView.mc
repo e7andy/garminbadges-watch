@@ -22,12 +22,6 @@ class GarminBadgesGlanceView extends WatchUi.GlanceView {
     private var _tickCount as Lang.Number = 0;
     private var _timer     as Timer.Timer?;
 
-    // Glance timers are clamped to a 1Hz minimum interval by the platform,
-    // so a long title is shown as a page-flip ticker (alternating chunks of
-    // whole words) rather than a smooth scroll.
-    private const TICKER_TICK_MS      = 1000;
-    private const PAGE_DURATION_TICKS = 2;
-
     function initialize() {
         GlanceView.initialize();
     }
@@ -47,7 +41,7 @@ class GarminBadgesGlanceView extends WatchUi.GlanceView {
         }
         _tickCount = 0;
         _timer = new Timer.Timer();
-        _timer.start(method(:onTimer), TICKER_TICK_MS, true);
+        _timer.start(method(:onTimer), BadgeFormat.TICKER_TICK_MS, true);
     }
 
     function onHide() as Void {
@@ -221,18 +215,11 @@ class GarminBadgesGlanceView extends WatchUi.GlanceView {
         }
 
         // Line 1: title, page-flip ticker (alternating chunks of whole
-        // words every PAGE_DURATION_TICKS) if it doesn't fit
-        var titleY    = (h * 0.22).toNumber();
-        var textWidth = dc.getTextWidthInPixels(_title, font);
+        // words) if it doesn't fit
+        var titleY = (h * 0.22).toNumber();
 
         dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
-        if (textWidth <= w) {
-            dc.drawText(w / 2, titleY, font, _title, justify);
-        } else {
-            var pages     = BadgeFormat.wrapText(dc, _title, font, w);
-            var pageIndex = (_tickCount / PAGE_DURATION_TICKS) % pages.size();
-            dc.drawText(w / 2, titleY, font, pages[pageIndex] as Lang.String, justify);
-        }
+        dc.drawText(w / 2, titleY, font, BadgeFormat.pagedText(dc, _title, font, w, _tickCount), justify);
 
         // Middle: progress bar for the closest challenge (empty if the
         // closest item is an upcoming badge or has no numeric target)

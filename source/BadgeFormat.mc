@@ -17,12 +17,10 @@ module BadgeFormat {
     const MENU_ICON_SIZE_FRAC   = 0.045;
     const MENU_ICON_MARGIN_FRAC = 0.05;
 
-    function trim(s as Lang.String, maxLen as Lang.Number) as Lang.String {
-        if (s.length() > maxLen) {
-            return s.substring(0, maxLen - 1) + "~";
-        }
-        return s;
-    }
+    // Page-flip ticker timing, shared by views that show a ticker for text
+    // too wide to fit (glance title, challenge/upcoming row names).
+    const TICKER_TICK_MS      = 1000;
+    const PAGE_DURATION_TICKS = 2;
 
     // Splits text on spaces. Lang.String has no split() in this API.
     function splitWords(text as Lang.String) as Lang.Array<Lang.String> {
@@ -95,6 +93,20 @@ module BadgeFormat {
         }
 
         return lines;
+    }
+
+    // Returns the text to draw this tick: `text` itself if it fits within
+    // maxWidth, otherwise a page-flip ticker that cycles through whole-word
+    // chunks, PAGE_DURATION_TICKS ticks per page, driven by tickCount (a
+    // counter incremented once per TICKER_TICK_MS by the caller's timer).
+    function pagedText(dc as Graphics.Dc, text as Lang.String, font as Graphics.FontDefinition, maxWidth as Lang.Number, tickCount as Lang.Number) as Lang.String {
+        if (dc.getTextWidthInPixels(text, font) <= maxWidth) {
+            return text;
+        }
+
+        var pages     = wrapText(dc, text, font, maxWidth);
+        var pageIndex = (tickCount / PAGE_DURATION_TICKS) % pages.size();
+        return pages[pageIndex] as Lang.String;
     }
 
     // JSON numbers without a fractional part decode as Lang.Number, and some
@@ -198,7 +210,7 @@ module BadgeFormat {
     // Draws one challenge row (name, days-offset, and progress bar/fraction or
     // "No target") at the given top y-coordinate. Shared by the main page and
     // the all-challenges page, which use identical row layouts.
-    function drawChallengeRow(dc as Graphics.Dc, badge as Lang.Dictionary, rowTop as Lang.Number, w as Lang.Number, h as Lang.Number, justify as Lang.Number) as Void {
+    function drawChallengeRow(dc as Graphics.Dc, badge as Lang.Dictionary, rowTop as Lang.Number, w as Lang.Number, h as Lang.Number, justify as Lang.Number, tickCount as Lang.Number) as Void {
         var cx = w / 2;
 
         var barLeft   = (w * 0.12).toNumber();
@@ -229,11 +241,6 @@ module BadgeFormat {
 
         var nameY = (rowTop + h * 0.045).toNumber();
 
-        // Badge name (left)
-        dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(barLeft, nameY, Graphics.FONT_XTINY,
-            trim(nameStr, 24), Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
-
         // Days ahead/behind schedule (right)
         var daysColor = GRAY;
         if (daysBehindVal >= 0.5) {
@@ -241,9 +248,18 @@ module BadgeFormat {
         } else if (daysBehindVal <= -0.5) {
             daysColor = GREEN;
         }
+        var daysText  = formatDaysOffset(daysBehindVal);
+        var daysWidth = dc.getTextWidthInPixels(daysText, Graphics.FONT_XTINY);
         dc.setColor(daysColor, Graphics.COLOR_TRANSPARENT);
         dc.drawText(barRight, nameY, Graphics.FONT_XTINY,
-            formatDaysOffset(daysBehindVal), Graphics.TEXT_JUSTIFY_RIGHT | Graphics.TEXT_JUSTIFY_VCENTER);
+            daysText, Graphics.TEXT_JUSTIFY_RIGHT | Graphics.TEXT_JUSTIFY_VCENTER);
+
+        // Badge name (left) — page-flip ticker if too wide to fit next to
+        // the days indicator
+        var nameMaxWidth = barRight - barLeft - daysWidth - (w * 0.02).toNumber();
+        dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(barLeft, nameY, Graphics.FONT_XTINY,
+            pagedText(dc, nameStr, Graphics.FONT_XTINY, nameMaxWidth, tickCount), Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
 
         if (hasTarget) {
             // Progress bar background
