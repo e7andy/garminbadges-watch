@@ -11,6 +11,9 @@ module BadgeFormat {
     const GRAY  = 0x888888;
     const DIM   = 0x444444;
 
+    const MENU_ICON_SIZE_FRAC   = 0.045;
+    const MENU_ICON_MARGIN_FRAC = 0.05;
+
     function trim(s as Lang.String, maxLen as Lang.Number) as Lang.String {
         if (s.length() > maxLen) {
             return s.substring(0, maxLen - 1) + "~";
@@ -179,6 +182,39 @@ module BadgeFormat {
             dc.drawText(cx, (rowTop + h * 0.18 + 0.5).toNumber(), Graphics.FONT_XTINY,
                 "No target", justify);
         }
+    }
+
+    // Top-left x/y and size (square) of the menu icon's tap target, in the
+    // top-right corner of the screen.
+    function menuIconBounds(w as Lang.Number, h as Lang.Number) as Lang.Array<Lang.Number> {
+        var size   = (h * MENU_ICON_SIZE_FRAC).toNumber();
+        var margin = (w * MENU_ICON_MARGIN_FRAC).toNumber();
+        return [w - margin - size, margin, size];
+    }
+
+    // Draws a small "hamburger" icon in the top-right corner, marking that an
+    // options menu is available (tap it, hold START/STOP, or press MENU).
+    function drawMenuIcon(dc as Graphics.Dc, w as Lang.Number, h as Lang.Number) as Void {
+        var bounds = menuIconBounds(w, h);
+        var x    = bounds[0];
+        var y    = bounds[1];
+        var size = bounds[2];
+        var gap  = size / 3;
+
+        dc.setColor(DIM, Graphics.COLOR_TRANSPARENT);
+        for (var i = 0; i < 3; i += 1) {
+            var ly = y + i * gap;
+            dc.drawLine(x, ly, x + size, ly);
+        }
+    }
+
+    // True if (x, y) falls within the menu icon's tap target, with extra
+    // padding around it for easier touch.
+    function isMenuIconHit(x as Lang.Number, y as Lang.Number, w as Lang.Number, h as Lang.Number) as Lang.Boolean {
+        var bounds = menuIconBounds(w, h);
+        var pad    = bounds[2];
+        return x >= bounds[0] - pad && x <= bounds[0] + bounds[2] + pad &&
+               y >= bounds[1] - pad && y <= bounds[1] + bounds[2] + pad;
     }
 
     // Draws the vertical scroll-position thumb on the right edge, if the

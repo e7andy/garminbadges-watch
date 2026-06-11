@@ -9,6 +9,7 @@ class GarminBadgesView extends ScrollableView {
 
     private var _loading    as Lang.Boolean = true;
     private var _hasData    as Lang.Boolean = false;
+    private var _refreshing as Lang.Boolean = false;
     private var _error      as Lang.String  = "";
     private var _challenges as Lang.Array<Lang.Dictionary> = [];
     private var _upcoming   as Lang.Array<Lang.Dictionary> = [];
@@ -25,10 +26,12 @@ class GarminBadgesView extends ScrollableView {
         if (cached != null) {
             applyData(cached);
         }
-        fetchData();
+        fetchData(true);
     }
 
-    function fetchData() as Void {
+    // silent: when true, refreshes in the background without showing the
+    // "Refreshing..." indicator (used for the automatic refresh on open).
+    function fetchData(silent as Lang.Boolean) as Void {
         var apiKey = Application.Properties.getValue("ApiKey") as Lang.String?;
         var apiUrl = Application.Properties.getValue("ApiUrl") as Lang.String?;
 
@@ -46,8 +49,10 @@ class GarminBadgesView extends ScrollableView {
         if (!_hasData) {
             _loading = true;
             _error   = "";
-            WatchUi.requestUpdate();
+        } else if (!silent) {
+            _refreshing = true;
         }
+        WatchUi.requestUpdate();
 
         var options = {
             :method       => Communications.HTTP_REQUEST_METHOD_GET,
@@ -62,7 +67,8 @@ class GarminBadgesView extends ScrollableView {
     }
 
     function onReceive(responseCode as Lang.Number, data as Lang.Dictionary or Lang.String or PersistedContent.Iterator or Null) as Void {
-        _loading = false;
+        _loading    = false;
+        _refreshing = false;
 
         if (responseCode == 200 && data instanceof Lang.Dictionary) {
             var d = data as Lang.Dictionary;
@@ -115,6 +121,15 @@ class GarminBadgesView extends ScrollableView {
 
         dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
         dc.clear();
+
+        BadgeFormat.drawMenuIcon(dc, w, h);
+
+        if (_refreshing) {
+            var iconBounds = BadgeFormat.menuIconBounds(w, h);
+            dc.setColor(BadgeFormat.GRAY, Graphics.COLOR_TRANSPARENT);
+            dc.drawText(iconBounds[1], iconBounds[1] + iconBounds[2] / 2, Graphics.FONT_XTINY,
+                "Refreshing...", Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
+        }
 
         if (_loading) {
             dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
