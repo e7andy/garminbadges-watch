@@ -57,7 +57,7 @@ Until the app is published, sideloaded builds can't show a Settings screen in Ga
    ```
    `-e`/`--package-app` produces an `.iq` store package (instead of a single-device `.prg`); `-r`/`--release` strips debug info.
 4. **Upload `bin/GarminBadges.iq`** to the app listing via the Developer Portal's "Upload App" / App Versions tab.
-5. **Fill in store listing details**: name, description, category, supported devices (should match `manifest.xml`), screenshots per device group, app icon (`resources/drawables/launcher_icon.svg`), and a privacy policy URL — use `https://garminbadges.com/privacy`. See "Store listing content" below for draft name/description text.
+5. **Fill in store listing details**: name, description, category, supported devices (should match `manifest.xml`), screenshots, app store icon, and a privacy policy URL — use `https://garminbadges.com/privacy`. See "Store listing content" and "Required images" below.
 6. **Submit for review.** Garmin reviews submissions (can take days). Once approved and published, users install via the Connect IQ Store / Garmin Connect Mobile app, and Connect Mobile's Settings screen will work (pulling `ApiKey`/`ApiUrl`/`MaxDurationDays` from the now-registered schema).
 7. **Future updates** — repeat steps 3–4 (build + upload a new `.iq`); the portal auto-increments the version on each upload, no manifest version field to bump.
 
@@ -78,6 +78,19 @@ Until the app is published, sideloaded builds can't show a Settings screen in Ga
 
 - **Category**: a "Tools" / "Data" style category (exact options are set by the portal at submission time).
 - **Settings copy** (if the portal asks for per-setting descriptions, see "Setup" in `README.md` for the `ApiKey`/`ApiUrl`/`MaxDurationDays` wording).
+
+### Required images
+
+These are uploaded directly via the developer portal — they are not part of the build/`.iq` package.
+
+- **App Store icon** — 500x500px, sRGB. Shown in store listings and search results. Allow ~10px padding, center the icon, and use a simple **solid (non-black, non-transparent) background** — this is a different design from `resources/drawables/launcher_icon.svg` (the small in-app icon, which has a black background and is fine as-is for that purpose).
+- **On-device icons** (optional) — 128x128px, sRGB, two variants: a full-color one for OLED displays and a low-color one (64-color palette) for memory-in-pixel displays.
+- **Hero/banner image** (optional, promotional) — 1440x720px.
+- **Screenshots** — each ≤500x500px and ≤150KB, captured from the simulator (`connectiq.bat` + `monkeydo.bat`, then Win+Shift+S to capture and crop/resize). Cover the app's main views, on at least one round device (most of `manifest.xml`'s targets are round):
+  - Glance preview
+  - Main page (UPCOMING + challenges list)
+  - All-challenges page
+  - A detail page (challenge or upcoming)
 
 ## Simulator
 
