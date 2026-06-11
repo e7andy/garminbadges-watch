@@ -48,7 +48,7 @@ Output goes to `bin/GarminBadges.prg` (ignored by `.gitignore`).
 
 Until the app is published, sideloaded builds can't show a Settings screen in Garmin Connect Mobile (see "Settings on a real device" below) — publishing (even just submitting, before approval) registers the app's settings schema with Garmin's backend.
 
-1. **Garmin Connect IQ Developer account** — sign up / sign in at [apps.garmin.com](https://apps.garmin.com) (Connect IQ Developer Portal) using the same Garmin account as `developer_key`'s registered public key. If `developer_key` was generated fresh, upload the matching public key (`developer_key.pub` / `.der`) under your account's profile so builds signed with it are accepted.
+1. **Garmin Connect IQ Developer account** — as of late 2025, `apps.garmin.com` no longer hosts developer/upload functionality (it now redirects end users to the Connect IQ Store mobile app). Developer app management has moved to **[apps-developer.garmin.com](https://apps-developer.garmin.com)** — sign in there with the same Garmin account as `developer_key`'s registered public key. If `developer_key` was generated fresh, upload the matching public key (`developer_key.pub` / `.der`) under your account's profile so builds signed with it are accepted.
 2. **Create the app listing** — "My Apps" → "Create App". Use the **same app ID** as `<iq:application id="...">` in `manifest.xml` (`a8e4c3b2-7f61-4d8e-9c2a-1b5f3e7d9a0c`) if the listing was created from this manifest; otherwise the portal assigns one and `manifest.xml` must be updated to match.
 3. **Build a release package** covering all supported devices (the full `<iq:products>` list in `manifest.xml`), with debug info stripped:
    ```powershell
@@ -57,9 +57,27 @@ Until the app is published, sideloaded builds can't show a Settings screen in Ga
    ```
    `-e`/`--package-app` produces an `.iq` store package (instead of a single-device `.prg`); `-r`/`--release` strips debug info.
 4. **Upload `bin/GarminBadges.iq`** to the app listing via the Developer Portal's "Upload App" / App Versions tab.
-5. **Fill in store listing details**: name, description, category, supported devices (should match `manifest.xml`), screenshots per device group, app icon (`resources/drawables/launcher_icon.svg`), and a privacy policy URL — use `https://garminbadges.com/privacy`.
+5. **Fill in store listing details**: name, description, category, supported devices (should match `manifest.xml`), screenshots per device group, app icon (`resources/drawables/launcher_icon.svg`), and a privacy policy URL — use `https://garminbadges.com/privacy`. See "Store listing content" below for draft name/description text.
 6. **Submit for review.** Garmin reviews submissions (can take days). Once approved and published, users install via the Connect IQ Store / Garmin Connect Mobile app, and Connect Mobile's Settings screen will work (pulling `ApiKey`/`ApiUrl`/`MaxDurationDays` from the now-registered schema).
 7. **Future updates** — repeat steps 3–4 (build + upload a new `.iq`); the portal auto-increments the version on each upload, no manifest version field to bump.
+
+### Store listing content
+
+- **Name**: `Garmin Badges` (matches `AppName` in `resources/properties.xml`).
+- **Description** (draft — adjust to fit the portal's character limit):
+
+  > Track your [garminbadges.com](https://garminbadges.com) challenge progress right from your wrist.
+  >
+  > - See your most urgent in-progress challenges, ranked by how far ahead or behind schedule you are, each with a live progress bar (e.g. 7/10 km).
+  > - An UPCOMING section gives you a heads-up on challenges starting in the next 7 days.
+  > - Select or tap any challenge for full details: progress, percentage, schedule status, and duration.
+  > - A glance widget on your watch face loop shows your next challenge (or the most urgent one) and how many challenges you're currently behind on.
+  > - Optionally hide long-running challenges by setting a maximum duration in Settings.
+  >
+  > Requires a free GarminBadges account — get your API key at garminbadges.com/dashboard (Settings → API Key) and enter it in this app's settings in Garmin Connect.
+
+- **Category**: a "Tools" / "Data" style category (exact options are set by the portal at submission time).
+- **Settings copy** (if the portal asks for per-setting descriptions, see "Setup" in `README.md` for the `ApiKey`/`ApiUrl`/`MaxDurationDays` wording).
 
 ## Simulator
 

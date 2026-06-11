@@ -17,10 +17,13 @@ Data is fetched live from the GarminBadges API using your account's API key, and
 
 ## Setup
 
-1. Install the app on your watch via the Connect IQ store (or sideload the `.prg` for development).
-2. Open the **Garmin Connect** app on your phone → My Device → Apps → GarminBadges → Settings.
-3. Paste your **API key** from [garminbadges.com/dashboard](https://garminbadges.com/dashboard) (Settings → API Key).
-4. The **API URL** defaults to `https://api.garminbadges.com/api` — leave it unless you're pointing at a local dev server.
+1. Install the app on your watch via the Connect IQ Store (or sideload the `.prg` for development).
+2. Open the **Garmin Connect** app on your phone → **Devices** → select your watch → **More** → **Connect IQ Store** (or **Apps**) → **Garmin Badges** → the gear/**Settings** icon.
+3. Configure these settings:
+   - **API Key** — paste your key from [garminbadges.com/dashboard](https://garminbadges.com/dashboard) (Settings → API Key). Required — the app shows an error until this is set.
+   - **API URL** — defaults to `https://api.garminbadges.com/api`. Leave it unless you're pointing at a self-hosted/dev backend.
+   - **Max Duration (days, 0 = no limit)** — hides any challenge or upcoming badge whose duration exceeds this many days (e.g. set to `31` to hide quarterly/annual challenges and only track shorter ones). `0` (default) shows everything.
+4. Settings save automatically and take effect the next time the app refreshes (open it, or wait for its automatic refresh).
 
 ## Supported devices
 
