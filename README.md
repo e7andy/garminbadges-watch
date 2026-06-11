@@ -5,9 +5,15 @@ A Garmin Connect IQ watch app that shows your [GarminBadges](https://garminbadge
 ## What it shows
 
 - **Upcoming** — badges/challenges starting within the next 7 days (shown only when there are any)
-- **Challenges** — your most urgent in-progress challenges, ranked by how many days behind schedule you are, each with a progress bar and fraction (e.g. `7/10 km`). Scroll with the UP/DOWN buttons, or drag/flick on the touchscreen, if there are more than fit on screen. The first 5 are shown on the main page; if you have more, tap the "MORE" row (or press MENU) to see all of them on a second page, sorted most urgent first.
+- **Challenges** — your most urgent in-progress challenges, ranked by how many days behind schedule you are, each with a progress bar and fraction (e.g. `7/10 km`). Scroll with the UP/DOWN buttons, or drag/flick on the touchscreen, if there are more than fit on screen. The first 5 are shown on the main page; if you have more, a "MORE" row lets you see all of them on a second page, sorted most urgent first. Long badge names that don't fit are shown as a page-flip ticker.
 
-Data is fetched live from the GarminBadges API using your account's API key. Press the SELECT button to refresh.
+Data is fetched live from the GarminBadges API using your account's API key, and cached on-device so the last result shows immediately on launch while a fresh copy loads in the background.
+
+## Navigation
+
+- **UP/DOWN** (or drag/flick) move the selection / scroll the list, including into the "UPCOMING" rows at the top.
+- **SELECT** (or tap a row) opens a detail page for the selected challenge or upcoming badge, showing its full progress, schedule status, and duration. Tapping the "MORE" row opens the second page listing all challenges. BACK returns to the previous page.
+- **MENU** (or hold START/STOP, or tap the menu icon in the top-right corner) opens an options menu to refresh the data or jump to the all-challenges page.
 
 ## Setup
 
@@ -74,12 +80,19 @@ garminbadges-watch/
 ├── jungle.xml                          # Build config
 ├── source/
 │   ├── GarminBadgesApp.mc                   # Entry point (AppBase)
-│   ├── GarminBadgesView.mc                  # Main page: UI rendering + API fetch + scroll state
-│   ├── GarminBadgesDelegate.mc              # Main page input (SELECT/tap = refresh, UP/DOWN/drag/flick = scroll, MORE/MENU = open all-challenges page)
+│   ├── GarminBadgesView.mc                  # Main page: UI rendering + API fetch + selection state
+│   ├── GarminBadgesDelegate.mc              # Main page input (SELECT/tap = open detail page, UP/DOWN/drag/flick = move selection/scroll, MORE/MENU/hold START = options menu)
 │   ├── GarminBadgesAllChallengesView.mc     # Second page: all challenges, most urgent first
-│   ├── GarminBadgesAllChallengesDelegate.mc # Second page input (UP/DOWN/drag/flick = scroll, BACK = pop)
-│   └── GarminBadgesGlanceView.mc            # Glance preview: title + progress bar + behind count
+│   ├── GarminBadgesAllChallengesDelegate.mc # Second page input (SELECT/tap = open detail page, UP/DOWN/drag/flick = scroll, BACK = pop)
+│   ├── GarminBadgesChallengeDetailView.mc   # Detail page for a single challenge
+│   ├── GarminBadgesUpcomingDetailView.mc    # Detail page for an upcoming badge
+│   ├── GarminBadgesMenuDelegate.mc          # Options menu (Refresh / All Challenges)
+│   ├── GarminBadgesGlanceView.mc            # Glance preview: title + progress bar + behind count
+│   ├── ScrollableView.mc                    # Shared scroll/momentum/ticker state
+│   ├── ScrollDelegate.mc                    # Shared drag/flick/button scrolling
+│   ├── BadgeFormat.mc                       # Shared formatting/drawing helpers
+│   └── BadgeCache.mc                        # On-device cache of the latest API response
 └── resources/
     ├── drawables/                      # Launcher icon
-    └── properties.xml                  # App properties + settings UI (ApiKey, ApiUrl)
+    └── properties.xml                  # App properties + settings UI (ApiKey, ApiUrl, MaxDurationDays)
 ```
