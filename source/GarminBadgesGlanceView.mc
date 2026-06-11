@@ -198,7 +198,9 @@ class GarminBadgesGlanceView extends WatchUi.GlanceView {
         dc.clear();
 
         var justify = Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER;
-        var font    = Graphics.FONT_XTINY;
+        // FONT_SYSTEM_XTINY (unlike FONT_XTINY) follows the device's "Text
+        // Size" accessibility setting.
+        var font    = Graphics.FONT_SYSTEM_XTINY;
 
         if (_loading) {
             dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
