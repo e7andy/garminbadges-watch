@@ -14,6 +14,7 @@ class GarminBadgesGlanceView extends WatchUi.GlanceView {
     private var _hasData   as Lang.Boolean = false;
     private var _error     as Lang.String  = "";
     private var _title     as Lang.String  = "";
+    private var _endingSoon as Lang.Number = 0;
     private var _behind    as Lang.Number  = 0;
     private var _hasTarget as Lang.Boolean = false;
     private var _ratio     as Lang.Float   = 0.0;
@@ -117,13 +118,19 @@ class GarminBadgesGlanceView extends WatchUi.GlanceView {
             upcoming = up as Lang.Array<Lang.Dictionary>;
         }
 
-        _behind = 0;
+        _endingSoon = 0;
+        _behind     = 0;
         for (var i = 0; i < challenges.size(); i += 1) {
             var c = challenges[i] as Lang.Dictionary;
+
             var db = c.get("days_behind");
             var dbVal = (db != null) ? db as Lang.Number : 0;
             if (dbVal > 0) {
                 _behind += 1;
+            }
+
+            if (daysUntilEndOf(c) <= 7) {
+                _endingSoon += 1;
             }
         }
 
@@ -275,11 +282,11 @@ class GarminBadgesGlanceView extends WatchUi.GlanceView {
             }
         }
 
-        // Line 2: number of challenges behind schedule
-        var behindY    = (h * 0.78).toNumber();
-        var behindText = _behind.toString() + " behind";
+        // Line 2: number of challenges ending soon and number behind schedule
+        var summaryY    = (h * 0.78).toNumber();
+        var summaryText = _endingSoon.toString() + " ending · " + _behind.toString() + " behind";
 
         dc.setColor((_behind > 0) ? BadgeFormat.RED : BadgeFormat.GRAY, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(w / 2, behindY, font, behindText, justify);
+        dc.drawText(w / 2, summaryY, font, summaryText, justify);
     }
 }
