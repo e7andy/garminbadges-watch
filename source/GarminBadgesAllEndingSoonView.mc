@@ -2,16 +2,16 @@ import Toybox.Graphics;
 import Toybox.Lang;
 import Toybox.WatchUi;
 
-// "All Challenges" page — all in-progress, time-limited challenges, sorted
-// most urgent (most days behind schedule) first. Reached by
-// selecting/tapping the CHALLENGES section on the main page.
-class GarminBadgesAllChallengesView extends ScrollableView {
+// "All Ending Soon" page — every in-progress challenge ending within 7 days
+// (including overdue), sorted soonest-ending first. Reached by
+// selecting/tapping the ENDING SOON section on the main page.
+class GarminBadgesAllEndingSoonView extends ScrollableView {
 
-    private var _challenges as Lang.Array<Lang.Dictionary>;
+    private var _endingSoon as Lang.Array<Lang.Dictionary>;
 
-    function initialize(challenges as Lang.Array<Lang.Dictionary>) {
+    function initialize(endingSoon as Lang.Array<Lang.Dictionary>) {
         ScrollableView.initialize();
-        _challenges = challenges;
+        _endingSoon = endingSoon;
     }
 
     function onLayout(dc as Graphics.Dc) as Void {
@@ -30,7 +30,7 @@ class GarminBadgesAllChallengesView extends ScrollableView {
         // Title
         dc.setColor(BadgeFormat.RED, Graphics.COLOR_TRANSPARENT);
         dc.drawText(cx, (h * 0.08 + 0.5).toNumber(), Graphics.FONT_XTINY,
-            "ALL CHALLENGES", justify);
+            "ENDING SOON", justify);
 
         // Divider
         dc.setColor(BadgeFormat.DIM, Graphics.COLOR_TRANSPARENT);
@@ -40,14 +40,14 @@ class GarminBadgesAllChallengesView extends ScrollableView {
         var viewportTop    = (h * 0.22).toNumber();
         var viewportHeight = h - viewportTop;
 
-        if (_challenges.size() == 0) {
+        if (_endingSoon.size() == 0) {
             dc.setColor(BadgeFormat.GRAY, Graphics.COLOR_TRANSPARENT);
             dc.drawText(cx, viewportTop + viewportHeight / 2, Graphics.FONT_SMALL,
-                "No challenges\nin progress", justify);
+                "Nothing ending\nsoon", justify);
             return;
         }
 
-        var count         = _challenges.size();
+        var count         = _endingSoon.size();
         var rowHeightPx   = (h * ROW_HEIGHT_FRAC).toNumber();
         var contentHeight = count * rowHeightPx;
 
@@ -86,7 +86,7 @@ class GarminBadgesAllChallengesView extends ScrollableView {
                 BadgeFormat.drawSelectionMarker(dc, rowTop, rowHeightPx, w);
             }
 
-            BadgeFormat.drawChallengeRow(dc, _challenges[i] as Lang.Dictionary, rowTop, w, h, justify, _tickCount);
+            BadgeFormat.drawChallengeRow(dc, _endingSoon[i] as Lang.Dictionary, rowTop, w, h, justify, _tickCount);
         }
 
         dc.clearClip();
@@ -98,9 +98,9 @@ class GarminBadgesAllChallengesView extends ScrollableView {
     // the list.
     function challengeAt(y as Lang.Number) as Lang.Dictionary? {
         var idx = rowIndexAt(y);
-        if (idx < 0 || idx >= _challenges.size()) {
+        if (idx < 0 || idx >= _endingSoon.size()) {
             return null;
         }
-        return _challenges[idx] as Lang.Dictionary;
+        return _endingSoon[idx] as Lang.Dictionary;
     }
 }

@@ -3,7 +3,8 @@ import Toybox.System;
 import Toybox.Timer;
 import Toybox.WatchUi;
 
-// Drag/flick/button scrolling is provided by ScrollDelegate.
+// Drag/flick/button scrolling is provided by ScrollDelegate (harmless
+// no-ops on this page, since GarminBadgesView never sets _maxScroll > 0).
 class GarminBadgesDelegate extends ScrollDelegate {
 
     private var _view as GarminBadgesView;
@@ -16,47 +17,36 @@ class GarminBadgesDelegate extends ScrollDelegate {
         _view = view;
     }
 
-    // DOWN button — move the "UPCOMING" selection forward, or once past the
-    // last upcoming row, scroll the challenges list down by one row.
+    // DOWN button — move the section selection forward.
     function onNextPage() as Lang.Boolean {
-        var upCount = _view.upcomingCount();
-        var selUp   = _view.selectedUpcomingIndex();
-
-        if (selUp >= 0) {
-            if (selUp < upCount - 1) {
-                _view.setSelectedUpcomingIndex(selUp + 1);
-            } else {
-                _view.setSelectedUpcomingIndex(-1);
-            }
-            WatchUi.requestUpdate();
-            return true;
-        }
-
-        _view.scrollBy(_view.rowHeightPx());
+        _view.moveSelection(1);
+        WatchUi.requestUpdate();
         return true;
     }
 
-    // UP button — scroll the challenges list up by one row, or once at the
-    // top, move into the "UPCOMING" selection.
+    // UP button — move the section selection back.
     function onPreviousPage() as Lang.Boolean {
-        var upCount = _view.upcomingCount();
-        var selUp   = _view.selectedUpcomingIndex();
+        _view.moveSelection(-1);
+        WatchUi.requestUpdate();
+        return true;
+    }
 
-        if (selUp == -1) {
-            if (upCount > 0 && _view.isScrolledToTop()) {
-                _view.setSelectedUpcomingIndex(upCount - 1);
-                WatchUi.requestUpdate();
-                return true;
-            }
-            _view.scrollBy(-_view.rowHeightPx());
+    // Opens the "All <Section>" page for the given section id. Returns false
+    // if sectionId is -1 (no section there).
+    private function openSection(sectionId as Lang.Number) as Lang.Boolean {
+        if (sectionId == BadgeFormat.SECTION_UPCOMING) {
+            _view.showAllUpcoming();
             return true;
         }
-
-        if (selUp > 0) {
-            _view.setSelectedUpcomingIndex(selUp - 1);
-            WatchUi.requestUpdate();
+        if (sectionId == BadgeFormat.SECTION_ENDING_SOON) {
+            _view.showAllEndingSoon();
+            return true;
         }
-        return true;
+        if (sectionId == BadgeFormat.SECTION_CHALLENGES) {
+            _view.showAllChallenges();
+            return true;
+        }
+        return false;
     }
 
     // Cancels the pending menu-hold timer (called once START/STOP is
@@ -69,7 +59,7 @@ class GarminBadgesDelegate extends ScrollDelegate {
     }
 
     // Touch tap on the menu icon (top-right corner) — show the options menu;
-    // tap on an "UPCOMING" or challenge row — open its detail page
+    // tap on any row within a section — open that section's "All" page.
     function onTap(clickEvent as WatchUi.ClickEvent) as Lang.Boolean {
         var coords   = clickEvent.getCoordinates();
         var settings = System.getDeviceSettings();
@@ -77,23 +67,7 @@ class GarminBadgesDelegate extends ScrollDelegate {
             return onMenu();
         }
 
-        var upcoming = _view.upcomingAt(coords[1]);
-        if (upcoming != null) {
-            _view.showUpcomingDetail(upcoming);
-            return true;
-        }
-
-        if (_view.moreRowAt(coords[1])) {
-            _view.showAllChallenges();
-            return true;
-        }
-
-        var challenge = _view.challengeAt(coords[1]);
-        if (challenge != null) {
-            _view.showChallengeDetail(challenge);
-            return true;
-        }
-        return false;
+        return openSection(_view.sectionAt(coords[1]));
     }
 
     // Holding START/STOP also opens the options menu
@@ -105,10 +79,9 @@ class GarminBadgesDelegate extends ScrollDelegate {
         return false;
     }
 
-    // START/STOP released before the hold timer fired — open the
-    // detail/all-challenges page for the selected/marked row, same as a tap.
-    // If the timer already fired (a long hold), onMenu() has already run, so
-    // do nothing.
+    // START/STOP released before the hold timer fired — open the "All"
+    // page for the selected section, same as a tap. If the timer already
+    // fired (a long hold), onMenu() has already run, so do nothing.
     function onKeyReleased(keyEvent as WatchUi.KeyEvent) as Lang.Boolean {
         if (keyEvent.getKey() != WatchUi.KEY_ENTER) {
             return false;
@@ -119,26 +92,7 @@ class GarminBadgesDelegate extends ScrollDelegate {
         }
         cancelMenuHoldTimer();
 
-        var selUp = _view.selectedUpcomingIndex();
-        if (selUp >= 0) {
-            var upcoming = _view.upcomingBadgeAt(selUp);
-            if (upcoming != null) {
-                _view.showUpcomingDetail(upcoming);
-                return true;
-            }
-        }
-
-        if (_view.atMoreRow()) {
-            _view.showAllChallenges();
-            return true;
-        }
-
-        var challenge = _view.challengeAt(_view.viewportTop());
-        if (challenge != null) {
-            _view.showChallengeDetail(challenge);
-            return true;
-        }
-        return false;
+        return openSection(_view.selectedSection());
     }
 
     function onMenuHoldTimer() as Void {
@@ -146,15 +100,10 @@ class GarminBadgesDelegate extends ScrollDelegate {
         onMenu();
     }
 
-    // MENU button (or hold START/STOP, or tap the menu icon) — show options
-    // menu (refresh, plus all-challenges if there are more than fit on the
-    // main page)
+    // MENU button (or hold START/STOP, or tap the menu icon) — show options menu
     function onMenu() as Lang.Boolean {
         var menu = new WatchUi.Menu2({:title => "Menu"});
         menu.addItem(new WatchUi.MenuItem("Refresh", null, :refresh, {}));
-        if (_view.hasMoreChallenges()) {
-            menu.addItem(new WatchUi.MenuItem("All Challenges", null, :allChallenges, {}));
-        }
         WatchUi.pushView(menu, new GarminBadgesMenuDelegate(_view), WatchUi.SLIDE_UP);
         return true;
     }

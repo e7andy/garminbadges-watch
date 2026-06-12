@@ -4,16 +4,21 @@ A Garmin Connect IQ watch app that shows your [GarminBadges](https://garminbadge
 
 ## What it shows
 
-- **Upcoming** — badges/challenges starting within the next 7 days (shown only when there are any)
-- **Challenges** — your most urgent in-progress challenges, ranked by how many days behind schedule you are, each with a progress bar and fraction (e.g. `7/10 km`). Scroll with the UP/DOWN buttons, or drag/flick on the touchscreen, if there are more than fit on screen. The first 5 are shown on the main page; if you have more, a "MORE" row lets you see all of them on a second page, sorted most urgent first. Long badge names that don't fit are shown as a page-flip ticker.
+The main page has up to three sections, each hidden when it has nothing to show:
+
+- **Upcoming** — up to 3 badges/challenges starting within the next 7 days, with a "Today"/"Nd" countdown.
+- **Ending Soon** — up to 3 in-progress challenges ending within the next 7 days (including overdue ones), soonest first, each showing "Ends Nd"/"Ends today" plus a days-ahead/behind indicator.
+- **Challenges** — your most urgent in-progress challenges (up to 5), ranked by how many days behind schedule you are, each with a days-ahead/behind indicator.
+
+Long badge names that don't fit are shown as a page-flip ticker.
 
 Data is fetched live from the GarminBadges API using your account's API key, and cached on-device so the last result shows immediately on launch while a fresh copy loads in the background.
 
 ## Navigation
 
-- **UP/DOWN** (or drag/flick) move the selection / scroll the list, including into the "UPCOMING" rows at the top.
-- **SELECT** (or tap a row) opens a detail page for the selected challenge or upcoming badge, showing its full progress, schedule status, and duration. Tapping the "MORE" row opens the second page listing all challenges. BACK returns to the previous page.
-- **MENU** (or hold START/STOP, or tap the menu icon in the top-right corner) opens an options menu to refresh the data or jump to the all-challenges page.
+- **UP/DOWN** move the highlighted section between Upcoming, Ending Soon, and Challenges (whichever are visible).
+- **SELECT** (or tap any row) opens a full list page for that row's section — "Next Upcoming", "Ending Soon", or "All Challenges" — showing more detail (progress bars, fractions) and letting you scroll with UP/DOWN or drag/flick. From there, SELECT/tap a row opens its detail page (full progress, schedule status, duration). BACK returns to the previous page.
+- **MENU** (or hold START/STOP, or tap the menu icon in the top-right corner) opens an options menu to refresh the data.
 
 ## Setup
 
@@ -83,13 +88,17 @@ garminbadges-watch/
 ├── jungle.xml                          # Build config
 ├── source/
 │   ├── GarminBadgesApp.mc                   # Entry point (AppBase)
-│   ├── GarminBadgesView.mc                  # Main page: UI rendering + API fetch + selection state
-│   ├── GarminBadgesDelegate.mc              # Main page input (SELECT/tap = open detail page, UP/DOWN/drag/flick = move selection/scroll, MORE/MENU/hold START = options menu)
-│   ├── GarminBadgesAllChallengesView.mc     # Second page: all challenges, most urgent first
-│   ├── GarminBadgesAllChallengesDelegate.mc # Second page input (SELECT/tap = open detail page, UP/DOWN/drag/flick = scroll, BACK = pop)
+│   ├── GarminBadgesView.mc                  # Main page: UI rendering + API fetch + 3-section selection state
+│   ├── GarminBadgesDelegate.mc              # Main page input (SELECT/tap = open that section's list page, UP/DOWN = move section selection, MENU/hold START = options menu)
+│   ├── GarminBadgesAllUpcomingView.mc       # "Next Upcoming" page: next 10 upcoming badges
+│   ├── GarminBadgesAllUpcomingDelegate.mc   # "Next Upcoming" page input (SELECT/tap = open detail page, UP/DOWN/drag/flick = scroll, BACK = pop)
+│   ├── GarminBadgesAllEndingSoonView.mc     # "Ending Soon" page: all challenges ending within 7 days
+│   ├── GarminBadgesAllEndingSoonDelegate.mc # "Ending Soon" page input (SELECT/tap = open detail page, UP/DOWN/drag/flick = scroll, BACK = pop)
+│   ├── GarminBadgesAllChallengesView.mc     # "All Challenges" page: all challenges, most urgent first
+│   ├── GarminBadgesAllChallengesDelegate.mc # "All Challenges" page input (SELECT/tap = open detail page, UP/DOWN/drag/flick = scroll, BACK = pop)
 │   ├── GarminBadgesChallengeDetailView.mc   # Detail page for a single challenge
 │   ├── GarminBadgesUpcomingDetailView.mc    # Detail page for an upcoming badge
-│   ├── GarminBadgesMenuDelegate.mc          # Options menu (Refresh / All Challenges)
+│   ├── GarminBadgesMenuDelegate.mc          # Options menu (Refresh)
 │   ├── GarminBadgesGlanceView.mc            # Glance preview: title + progress bar + behind count
 │   ├── ScrollableView.mc                    # Shared scroll/momentum/ticker state
 │   ├── ScrollDelegate.mc                    # Shared drag/flick/button scrolling

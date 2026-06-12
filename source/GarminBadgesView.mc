@@ -7,17 +7,27 @@ import Toybox.WatchUi;
 
 class GarminBadgesView extends ScrollableView {
 
+    private const TOP_MARGIN_FRAC       = 0.04;
+    private const TITLE_TO_DIVIDER_FRAC = 0.045;
+    private const DIVIDER_TO_ROWS_FRAC  = 0.02;
+    private const SECTION_GAP_FRAC      = 0.025;
+    private const MAIN_ROW_HEIGHT_FRAC  = 0.07;
+
     private var _loading    as Lang.Boolean = true;
     private var _hasData    as Lang.Boolean = false;
     private var _refreshing as Lang.Boolean = false;
     private var _error      as Lang.String  = "";
     private var _challenges as Lang.Array<Lang.Dictionary> = [];
     private var _upcoming   as Lang.Array<Lang.Dictionary> = [];
+    private var _endingSoon as Lang.Array<Lang.Dictionary> = [];
 
-    private var _upcomingRowTop      as Lang.Number = 0;
-    private var _upcomingRowHeight   as Lang.Number = 0;
-    private var _upcomingCount       as Lang.Number = 0;
-    private var _selectedUpcomingIdx as Lang.Number = -1;
+    // Visible sections (in display order) and the pixel y-bounds of each
+    // section's row area, recomputed every onUpdate(). Used for UP/DOWN
+    // selection highlighting and tap hit-testing.
+    private var _sectionIds      as Lang.Array<Lang.Number> = [];
+    private var _sectionTops     as Lang.Array<Lang.Number> = [];
+    private var _sectionBottoms  as Lang.Array<Lang.Number> = [];
+    private var _selectedSectionIdx as Lang.Number = 0;
 
     function initialize() {
         ScrollableView.initialize();
@@ -115,13 +125,46 @@ class GarminBadgesView extends ScrollableView {
             _upcoming = [];
         }
 
+        _endingSoon = computeEndingSoon(_challenges);
+
         if (!_hasData) {
-            _scrollOffset        = 0;
-            _selectedUpcomingIdx = -1;
+            _selectedSectionIdx = 0;
         }
         _hasData = true;
         _loading = false;
         _error   = "";
+    }
+
+    // Challenges ending within 7 days (including overdue), sorted soonest
+    // first. May overlap with _challenges (a challenge can appear in both the
+    // CHALLENGES and ENDING SOON sections).
+    private function computeEndingSoon(challenges as Lang.Array<Lang.Dictionary>) as Lang.Array<Lang.Dictionary> {
+        var result = [] as Lang.Array<Lang.Dictionary>;
+        for (var i = 0; i < challenges.size(); i += 1) {
+            var badge = challenges[i] as Lang.Dictionary;
+            if (daysUntilEndOf(badge) <= 7) {
+                result.add(badge);
+            }
+        }
+
+        // Insertion sort ascending by days_until_end (small arrays, <= 20 items).
+        for (var i = 1; i < result.size(); i += 1) {
+            var current    = result[i] as Lang.Dictionary;
+            var currentDue = daysUntilEndOf(current);
+            var j = i - 1;
+            while (j >= 0 && daysUntilEndOf(result[j] as Lang.Dictionary) > currentDue) {
+                result[j + 1] = result[j];
+                j -= 1;
+            }
+            result[j + 1] = current;
+        }
+
+        return result;
+    }
+
+    private function daysUntilEndOf(badge as Lang.Dictionary) as Lang.Number {
+        var due = badge.get("days_until_end");
+        return (due != null) ? due as Lang.Number : 999;
     }
 
     function onUpdate(dc as Graphics.Dc) as Void {
@@ -157,224 +200,171 @@ class GarminBadgesView extends ScrollableView {
 
         var justify = Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER;
 
-        var titleY   = 0.08;
-        var dividerY = 0.16;
-        var rowStart = 0.22;
-
-        var upcomingCount = _upcoming.size();
-        if (upcomingCount > 3) {
-            upcomingCount = 3;
+        var upCount = _upcoming.size();
+        if (upCount > 3) {
+            upCount = 3;
         }
 
-        _upcomingCount = upcomingCount;
-
-        if (upcomingCount > 0) {
-            // "Upcoming" section
-            dc.setColor(BadgeFormat.RED, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(cx, (h * 0.06 + 0.5).toNumber(), Graphics.FONT_XTINY,
-                "UPCOMING", justify);
-
-            _upcomingRowTop    = (h * 0.0975).toNumber();
-            _upcomingRowHeight = (h * 0.065).toNumber();
-
-            for (var i = 0; i < upcomingCount; i += 1) {
-                var ub      = _upcoming[i] as Lang.Dictionary;
-                var ubName  = ub.get("name");
-                var ubDays  = ub.get("days_until");
-
-                var ubNameStr = (ubName != null) ? ubName as Lang.String : "";
-                var ubDaysNum = (ubDays != null) ? ubDays as Lang.Number : 0;
-
-                if (_selectedUpcomingIdx == i) {
-                    var ubRowTop = _upcomingRowTop + i * _upcomingRowHeight;
-                    BadgeFormat.drawSelectionTint(dc, ubRowTop, _upcomingRowHeight, w);
-                    BadgeFormat.drawSelectionMarker(dc, ubRowTop, _upcomingRowHeight, w);
-                }
-
-                var ubY       = (h * (0.13 + i * 0.065) + 0.5).toNumber();
-                var ubText    = ubNameStr + " " + BadgeFormat.formatDaysUntil(ubDaysNum);
-                var ubMaxWidth = BadgeFormat.textMaxWidth(w, h, ubY);
-
-                dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
-                dc.drawText(cx, ubY, Graphics.FONT_XTINY,
-                    BadgeFormat.pagedText(dc, ubText, Graphics.FONT_XTINY, ubMaxWidth, _tickCount), justify);
-            }
-
-            var afterUpcomingY = 0.13 + upcomingCount * 0.065;
-
-            // Divider between sections
-            dc.setColor(BadgeFormat.DIM, Graphics.COLOR_TRANSPARENT);
-            dc.drawLine((w * 0.15).toNumber(), (h * (afterUpcomingY + 0.02)).toNumber(),
-                        (w * 0.85).toNumber(), (h * (afterUpcomingY + 0.02)).toNumber());
-
-            titleY   = afterUpcomingY + 0.07;
-            dividerY = afterUpcomingY + 0.13;
-            rowStart = afterUpcomingY + 0.19;
+        var endCount = _endingSoon.size();
+        if (endCount > 3) {
+            endCount = 3;
         }
 
-        // "Challenges" title
-        dc.setColor(BadgeFormat.RED, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, (h * titleY + 0.5).toNumber(), Graphics.FONT_XTINY,
-            "CHALLENGES", justify);
+        var chalCount = _challenges.size();
+        if (chalCount > 5) {
+            chalCount = 5;
+        }
 
-        // Divider
-        dc.setColor(BadgeFormat.DIM, Graphics.COLOR_TRANSPARENT);
-        dc.drawLine((w * 0.15).toNumber(), (h * dividerY).toNumber(),
-                    (w * 0.85).toNumber(), (h * dividerY).toNumber());
-
-        var viewportTop    = (h * rowStart).toNumber();
-        var viewportHeight = h - viewportTop;
-
-        if (_challenges.size() == 0) {
-            var emptyFont = (upcomingCount > 0) ? Graphics.FONT_XTINY : Graphics.FONT_SMALL;
+        if (upCount == 0 && endCount == 0 && chalCount == 0) {
             dc.setColor(BadgeFormat.GRAY, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(cx, viewportTop + viewportHeight / 2, emptyFont,
-                "No challenges\nin progress", justify);
+            dc.drawText(cx, h / 2, Graphics.FONT_SMALL, "No challenges\nin progress", justify);
             return;
         }
 
-        var totalCount   = _challenges.size();
-        var displayCount = totalCount;
-        if (displayCount > 5) {
-            displayCount = 5;
+        var visibleCount = 0;
+        if (upCount > 0)   { visibleCount += 1; }
+        if (endCount > 0)  { visibleCount += 1; }
+        if (chalCount > 0) { visibleCount += 1; }
+
+        if (_selectedSectionIdx < 0) {
+            _selectedSectionIdx = 0;
         }
-        var hasMore = totalCount > 5;
-
-        var rowHeightPx  = (h * ROW_HEIGHT_FRAC).toNumber();
-        var totalRows    = displayCount + (hasMore ? 1 : 0);
-        var contentHeight = totalRows * rowHeightPx;
-
-        _viewportTop = viewportTop;
-        _rowHeightPx = rowHeightPx;
-
-        // Extra trailing space so the last row can be scrolled all the way
-        // up to the top of the viewport (and thus become selectable).
-        var extraSpace = viewportHeight - rowHeightPx;
-        if (extraSpace < 0) {
-            extraSpace = 0;
+        if (_selectedSectionIdx >= visibleCount) {
+            _selectedSectionIdx = visibleCount - 1;
         }
 
-        _maxScroll = contentHeight + extraSpace - viewportHeight;
-        if (_maxScroll < 0) {
-            _maxScroll = 0;
+        _sectionIds     = [];
+        _sectionTops    = [];
+        _sectionBottoms = [];
+
+        var currentY = TOP_MARGIN_FRAC;
+
+        if (upCount > 0) {
+            currentY = drawUpcomingSection(dc, w, h, currentY, upCount);
         }
-        if (_scrollOffset > _maxScroll) {
-            _scrollOffset = _maxScroll;
+        if (endCount > 0) {
+            currentY = drawCompactSection(dc, w, h, currentY, "ENDING SOON", _endingSoon, endCount, BadgeFormat.SECTION_ENDING_SOON, true);
+        }
+        if (chalCount > 0) {
+            currentY = drawCompactSection(dc, w, h, currentY, "CHALLENGES", _challenges, chalCount, BadgeFormat.SECTION_CHALLENGES, false);
+        }
+    }
+
+    // Draws the "UPCOMING" section (title + one drawUpcomingRow() per badge)
+    // and returns the fractional y just below it (where the next section's
+    // title should start).
+    private function drawUpcomingSection(dc as Graphics.Dc, w as Lang.Number, h as Lang.Number, startY as Lang.Float, count as Lang.Number) as Lang.Float {
+        var sectionIdx = _sectionIds.size();
+
+        BadgeFormat.drawSectionTitle(dc, w, h, startY, "UPCOMING");
+        BadgeFormat.drawSectionDivider(dc, w, h, startY + TITLE_TO_DIVIDER_FRAC);
+
+        var rowsTopFrac  = startY + TITLE_TO_DIVIDER_FRAC + DIVIDER_TO_ROWS_FRAC;
+        var rowHeightPx  = (h * MAIN_ROW_HEIGHT_FRAC).toNumber();
+        var rowsTopPx    = (h * rowsTopFrac).toNumber();
+        var rowsBottomPx = rowsTopPx + count * rowHeightPx;
+
+        if (sectionIdx == _selectedSectionIdx) {
+            BadgeFormat.drawSelectionTint(dc, rowsTopPx, rowsBottomPx - rowsTopPx, w);
+            BadgeFormat.drawSelectionMarker(dc, rowsTopPx, rowsBottomPx - rowsTopPx, w);
         }
 
-        var selectedIdx = rowIndexAt(viewportTop);
+        for (var i = 0; i < count; i += 1) {
+            var badge = _upcoming[i] as Lang.Dictionary;
+            var rowY  = rowsTopPx + i * rowHeightPx + rowHeightPx / 2;
+            BadgeFormat.drawUpcomingRow(dc, badge, rowY, w, h, _tickCount);
+        }
 
-        dc.setClip(0, viewportTop, w, viewportHeight);
+        _sectionIds.add(BadgeFormat.SECTION_UPCOMING);
+        _sectionTops.add(rowsTopPx);
+        _sectionBottoms.add(rowsBottomPx);
 
-        for (var i = 0; i < totalRows; i += 1) {
-            var rowTop = viewportTop + i * rowHeightPx - _scrollOffset;
+        return rowsTopFrac + count * MAIN_ROW_HEIGHT_FRAC + SECTION_GAP_FRAC;
+    }
 
-            // Skip rows fully outside the viewport
-            if (rowTop + rowHeightPx <= viewportTop || rowTop >= viewportTop + viewportHeight) {
-                continue;
+    // Draws a compact section (ENDING SOON or CHALLENGES): title + divider,
+    // then one BadgeFormat.drawCompactRow() per item. Returns the fractional
+    // y just below it.
+    private function drawCompactSection(dc as Graphics.Dc, w as Lang.Number, h as Lang.Number, startY as Lang.Float, title as Lang.String, items as Lang.Array<Lang.Dictionary>, count as Lang.Number, sectionId as Lang.Number, showEndsIn as Lang.Boolean) as Lang.Float {
+        var sectionIdx = _sectionIds.size();
+
+        BadgeFormat.drawSectionTitle(dc, w, h, startY, title);
+        BadgeFormat.drawSectionDivider(dc, w, h, startY + TITLE_TO_DIVIDER_FRAC);
+
+        var rowsTopFrac  = startY + TITLE_TO_DIVIDER_FRAC + DIVIDER_TO_ROWS_FRAC;
+        var rowHeightPx  = (h * MAIN_ROW_HEIGHT_FRAC).toNumber();
+        var rowsTopPx    = (h * rowsTopFrac).toNumber();
+        var rowsBottomPx = rowsTopPx + count * rowHeightPx;
+
+        if (sectionIdx == _selectedSectionIdx) {
+            BadgeFormat.drawSelectionTint(dc, rowsTopPx, rowsBottomPx - rowsTopPx, w);
+            BadgeFormat.drawSelectionMarker(dc, rowsTopPx, rowsBottomPx - rowsTopPx, w);
+        }
+
+        for (var i = 0; i < count; i += 1) {
+            var badge  = items[i] as Lang.Dictionary;
+            var rowTop = rowsTopPx + i * rowHeightPx;
+
+            var suffix = "";
+            if (showEndsIn) {
+                suffix = " " + BadgeFormat.formatEndsIn(daysUntilEndOf(badge));
             }
 
-            var isSelected = _selectedUpcomingIdx == -1 && i == selectedIdx;
-            if (isSelected) {
-                BadgeFormat.drawSelectionTint(dc, rowTop, rowHeightPx, w);
+            BadgeFormat.drawCompactRow(dc, badge, rowTop, rowHeightPx, w, _tickCount, suffix);
+        }
+
+        _sectionIds.add(sectionId);
+        _sectionTops.add(rowsTopPx);
+        _sectionBottoms.add(rowsBottomPx);
+
+        return rowsTopFrac + count * MAIN_ROW_HEIGHT_FRAC + SECTION_GAP_FRAC;
+    }
+
+    // Section id (SECTION_UPCOMING/ENDING_SOON/CHALLENGES) whose row area
+    // contains screen y-coordinate, or -1 if none.
+    function sectionAt(y as Lang.Number) as Lang.Number {
+        for (var i = 0; i < _sectionIds.size(); i += 1) {
+            if (y >= _sectionTops[i] && y < _sectionBottoms[i]) {
+                return _sectionIds[i] as Lang.Number;
             }
-
-            // "MORE" row
-            if (i >= displayCount) {
-                dc.setColor(BadgeFormat.RED, Graphics.COLOR_TRANSPARENT);
-                dc.drawText(cx, (rowTop + rowHeightPx / 2).toNumber(), Graphics.FONT_XTINY,
-                    "MORE", justify);
-                continue;
-            }
-
-            if (isSelected) {
-                BadgeFormat.drawSelectionMarker(dc, rowTop, rowHeightPx, w);
-            }
-
-            BadgeFormat.drawChallengeRow(dc, _challenges[i] as Lang.Dictionary, rowTop, w, h, justify, _tickCount);
         }
-
-        dc.clearClip();
-
-        BadgeFormat.drawScrollIndicator(dc, w, h, viewportTop, viewportHeight, contentHeight, _scrollOffset, _maxScroll);
+        return -1;
     }
 
-    // True once the catalogue has more in-progress challenges than fit on the
-    // main page (i.e. the "MORE" row is shown).
-    function hasMoreChallenges() as Lang.Boolean {
-        return _challenges.size() > 5;
-    }
-
-    // True when the list is scrolled all the way down to the "MORE" row.
-    function atMoreRow() as Lang.Boolean {
-        return hasMoreChallenges() && _maxScroll > 0 && _scrollOffset >= _maxScroll;
-    }
-
-    // Returns the challenge at screen y-coordinate, or null if y is on the
-    // "MORE" row, outside the list, or there's no challenge there.
-    function challengeAt(y as Lang.Number) as Lang.Dictionary? {
-        var idx = rowIndexAt(y);
-        if (idx < 0 || idx >= _challenges.size()) {
-            return null;
+    // The section id currently highlighted via UP/DOWN, or -1 if there are
+    // no visible sections.
+    function selectedSection() as Lang.Number {
+        if (_selectedSectionIdx < 0 || _selectedSectionIdx >= _sectionIds.size()) {
+            return -1;
         }
-
-        var displayCount = _challenges.size();
-        if (displayCount > 5) {
-            displayCount = 5;
-        }
-        if (idx >= displayCount) {
-            return null; // "MORE" row or beyond
-        }
-
-        return _challenges[idx] as Lang.Dictionary;
+        return _sectionIds[_selectedSectionIdx] as Lang.Number;
     }
 
-    // True if the "MORE" row is at screen y-coordinate.
-    function moreRowAt(y as Lang.Number) as Lang.Boolean {
-        if (!hasMoreChallenges()) {
-            return false;
+    // Moves the section selection by delta (UP = -1, DOWN = +1), clamped to
+    // the visible sections.
+    function moveSelection(delta as Lang.Number) as Void {
+        var newIdx = _selectedSectionIdx + delta;
+        if (newIdx < 0) {
+            newIdx = 0;
         }
-
-        var displayCount = 5;
-        return rowIndexAt(y) == displayCount;
-    }
-
-    // Number of "UPCOMING" rows shown (0-2).
-    function upcomingCount() as Lang.Number {
-        return _upcomingCount;
-    }
-
-    // Index of the "UPCOMING" row currently selected via UP/DOWN, or -1 if
-    // none (i.e. a challenge row is selected instead).
-    function selectedUpcomingIndex() as Lang.Number {
-        return _selectedUpcomingIdx;
-    }
-
-    function setSelectedUpcomingIndex(idx as Lang.Number) as Void {
-        _selectedUpcomingIdx = idx;
-    }
-
-    // Returns the upcoming badge at the given index, or null if out of range.
-    function upcomingBadgeAt(idx as Lang.Number) as Lang.Dictionary? {
-        if (idx < 0 || idx >= _upcoming.size()) {
-            return null;
+        if (newIdx >= _sectionIds.size()) {
+            newIdx = _sectionIds.size() - 1;
         }
-        return _upcoming[idx] as Lang.Dictionary;
+        _selectedSectionIdx = newIdx;
     }
 
-    // Returns the upcoming badge at screen y-coordinate, or null if y is
-    // outside the "UPCOMING" rows.
-    function upcomingAt(y as Lang.Number) as Lang.Dictionary? {
-        if (_upcomingCount == 0 || y < _upcomingRowTop) {
-            return null;
-        }
+    // Push the "all upcoming" page (next 10 upcoming badges).
+    function showAllUpcoming() as Void {
+        var view     = new GarminBadgesAllUpcomingView(_upcoming);
+        var delegate = new GarminBadgesAllUpcomingDelegate(view);
+        WatchUi.pushView(view, delegate, WatchUi.SLIDE_LEFT);
+    }
 
-        var idx = (y - _upcomingRowTop) / _upcomingRowHeight;
-        if (idx < 0 || idx >= _upcomingCount) {
-            return null;
-        }
-
-        return _upcoming[idx] as Lang.Dictionary;
+    // Push the "all ending soon" page (challenges ending within 7 days).
+    function showAllEndingSoon() as Void {
+        var view     = new GarminBadgesAllEndingSoonView(_endingSoon);
+        var delegate = new GarminBadgesAllEndingSoonDelegate(view);
+        WatchUi.pushView(view, delegate, WatchUi.SLIDE_LEFT);
     }
 
     // Push the "all challenges" page, sorted most-urgent first.

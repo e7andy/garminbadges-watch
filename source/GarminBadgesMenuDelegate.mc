@@ -16,8 +16,6 @@ class GarminBadgesMenuDelegate extends WatchUi.Menu2InputDelegate {
         WatchUi.popView(WatchUi.SLIDE_DOWN);
         if (id == :refresh) {
             _view.fetchData(false);
-        } else if (id == :allChallenges) {
-            _view.showAllChallenges();
         }
     }
 }

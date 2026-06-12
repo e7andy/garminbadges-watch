@@ -17,6 +17,12 @@ module BadgeFormat {
     const MENU_ICON_SIZE_FRAC   = 0.045;
     const MENU_ICON_MARGIN_FRAC = 0.05;
 
+    // Main-page section ids, in display order. A section is hidden entirely
+    // when its item list is empty.
+    const SECTION_UPCOMING    = 0;
+    const SECTION_ENDING_SOON = 1;
+    const SECTION_CHALLENGES  = 2;
+
     // Page-flip ticker timing, shared by views that show a ticker for text
     // too wide to fit (glance title, challenge/upcoming row names).
     const TICKER_TICK_MS      = 1000;
@@ -153,6 +159,11 @@ module BadgeFormat {
         return rounded.toString() + "d";
     }
 
+    // "Ends today" if daysUntilEnd <= 0 (including overdue), otherwise "Ends Nd".
+    function formatEndsIn(daysUntilEnd as Lang.Number) as Lang.String {
+        return (daysUntilEnd <= 0) ? "Ends today" : ("Ends " + daysUntilEnd.toString() + "d");
+    }
+
     function formatNum(value as Lang.Float) as Lang.String {
         if (value == value.toNumber().toFloat()) {
             return value.toNumber().toString();
@@ -207,9 +218,102 @@ module BadgeFormat {
         return h.format("%02d") + ":" + m.format("%02d") + ":" + s.format("%02d");
     }
 
+    // Draws the days-behind/ahead indicator (right) and the page-flip
+    // ticker'd "name + nameSuffix" (left) on one line at lineY. Returns the
+    // days-indicator color, which drawChallengeRow reuses for its progress
+    // bar fill.
+    function drawNameAndDaysLine(dc as Graphics.Dc, badge as Lang.Dictionary, lineY as Lang.Number, barLeft as Lang.Number, barRight as Lang.Number, w as Lang.Number, tickCount as Lang.Number, nameSuffix as Lang.String) as Lang.Number {
+        var name    = badge.get("name");
+        var nameStr = (name != null) ? name as Lang.String : "";
+
+        var daysBehindVal = toFloatVal(badge.get("days_behind"), 0.0);
+
+        // Days ahead/behind schedule (right)
+        var daysColor = GRAY;
+        if (daysBehindVal >= 0.5) {
+            daysColor = RED;
+        } else if (daysBehindVal <= -0.5) {
+            daysColor = GREEN;
+        }
+        var daysText  = formatDaysOffset(daysBehindVal);
+        var daysWidth = dc.getTextWidthInPixels(daysText, Graphics.FONT_XTINY);
+        dc.setColor(daysColor, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(barRight, lineY, Graphics.FONT_XTINY,
+            daysText, Graphics.TEXT_JUSTIFY_RIGHT | Graphics.TEXT_JUSTIFY_VCENTER);
+
+        // Badge name + suffix (left) — page-flip ticker if too wide to fit
+        // next to the days indicator
+        var nameMaxWidth = barRight - barLeft - daysWidth - (w * 0.02).toNumber();
+        dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(barLeft, lineY, Graphics.FONT_XTINY,
+            pagedText(dc, nameStr + nameSuffix, Graphics.FONT_XTINY, nameMaxWidth, tickCount), Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
+
+        return daysColor;
+    }
+
+    // Draws a compact one-line row (name [+ nameSuffix] on the left,
+    // days-behind/ahead indicator on the right), vertically centered within
+    // rowHeight. Used for the ENDING SOON and CHALLENGES sections on the main
+    // page.
+    function drawCompactRow(dc as Graphics.Dc, badge as Lang.Dictionary, rowTop as Lang.Number, rowHeight as Lang.Number, w as Lang.Number, tickCount as Lang.Number, nameSuffix as Lang.String) as Void {
+        var lineY = (rowTop + rowHeight / 2).toNumber();
+        drawNameAndDaysLine(dc, badge, lineY, (w * 0.12).toNumber(), (w * 0.88).toNumber(), w, tickCount, nameSuffix);
+    }
+
+    // Draws an "upcoming" row: badge name (left) + "Today"/"Nd" due date
+    // (right), vertically centered at rowY. On round/semi-round screens,
+    // falls back to a single centered line (name + due date) so rows near
+    // the top/bottom of the screen don't run under the bezel.
+    function drawUpcomingRow(dc as Graphics.Dc, badge as Lang.Dictionary, rowY as Lang.Number, w as Lang.Number, h as Lang.Number, tickCount as Lang.Number) as Void {
+        var name    = badge.get("name");
+        var nameStr = (name != null) ? name as Lang.String : "";
+        var due     = badge.get("days_until");
+        var dueVal  = (due != null) ? due as Lang.Number : 0;
+        var dueText = formatDaysUntil(dueVal);
+
+        var shape = System.getDeviceSettings().screenShape;
+        if (shape == System.SCREEN_SHAPE_ROUND || shape == System.SCREEN_SHAPE_SEMI_ROUND) {
+            var text     = nameStr + " " + dueText;
+            var maxWidth = textMaxWidth(w, h, rowY);
+            dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
+            dc.drawText(w / 2, rowY, Graphics.FONT_XTINY,
+                pagedText(dc, text, Graphics.FONT_XTINY, maxWidth, tickCount),
+                Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+            return;
+        }
+
+        var barLeft  = (w * 0.12).toNumber();
+        var barRight = (w * 0.88).toNumber();
+
+        dc.setColor(GRAY, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(barRight, rowY, Graphics.FONT_XTINY,
+            dueText, Graphics.TEXT_JUSTIFY_RIGHT | Graphics.TEXT_JUSTIFY_VCENTER);
+
+        var dueWidth     = dc.getTextWidthInPixels(dueText, Graphics.FONT_XTINY);
+        var nameMaxWidth = barRight - barLeft - dueWidth - (w * 0.02).toNumber();
+        dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(barLeft, rowY, Graphics.FONT_XTINY,
+            pagedText(dc, nameStr, Graphics.FONT_XTINY, nameMaxWidth, tickCount),
+            Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
+    }
+
+    // Draws a section title (e.g. "UPCOMING") centered at fractional height y.
+    function drawSectionTitle(dc as Graphics.Dc, w as Lang.Number, h as Lang.Number, y as Lang.Float, title as Lang.String) as Void {
+        dc.setColor(RED, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(w / 2, (h * y + 0.5).toNumber(), Graphics.FONT_XTINY,
+            title, Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+    }
+
+    // Draws a horizontal divider line at fractional height y.
+    function drawSectionDivider(dc as Graphics.Dc, w as Lang.Number, h as Lang.Number, y as Lang.Float) as Void {
+        dc.setColor(DIM, Graphics.COLOR_TRANSPARENT);
+        dc.drawLine((w * 0.15).toNumber(), (h * y).toNumber(),
+                    (w * 0.85).toNumber(), (h * y).toNumber());
+    }
+
     // Draws one challenge row (name, days-offset, and progress bar/fraction or
     // "No target") at the given top y-coordinate. Shared by the main page and
-    // the all-challenges page, which use identical row layouts.
+    // the all-challenges/all-ending-soon pages, which use identical row layouts.
     function drawChallengeRow(dc as Graphics.Dc, badge as Lang.Dictionary, rowTop as Lang.Number, w as Lang.Number, h as Lang.Number, justify as Lang.Number, tickCount as Lang.Number) as Void {
         var cx = w / 2;
 
@@ -218,14 +322,10 @@ module BadgeFormat {
         var barWidth  = barRight - barLeft;
         var barHeight = (h * 0.035 + 0.5).toNumber();
 
-        var name    = badge.get("name");
-        var nameStr = (name != null) ? name as Lang.String : "";
-
-        var progressVal   = toFloatVal(badge.get("progress_value"), 0.0);
-        var targetVal     = toFloatVal(badge.get("target_value"), 0.0);
-        var unit          = badge.get("unit_key");
-        var unitStr       = (unit != null) ? unit as Lang.String : "";
-        var daysBehindVal = toFloatVal(badge.get("days_behind"), 0.0);
+        var progressVal = toFloatVal(badge.get("progress_value"), 0.0);
+        var targetVal   = toFloatVal(badge.get("target_value"), 0.0);
+        var unit        = badge.get("unit_key");
+        var unitStr     = (unit != null) ? unit as Lang.String : "";
 
         var hasTarget = targetVal > 0;
         var ratio = 0.0;
@@ -240,26 +340,7 @@ module BadgeFormat {
         }
 
         var nameY = (rowTop + h * 0.045).toNumber();
-
-        // Days ahead/behind schedule (right)
-        var daysColor = GRAY;
-        if (daysBehindVal >= 0.5) {
-            daysColor = RED;
-        } else if (daysBehindVal <= -0.5) {
-            daysColor = GREEN;
-        }
-        var daysText  = formatDaysOffset(daysBehindVal);
-        var daysWidth = dc.getTextWidthInPixels(daysText, Graphics.FONT_XTINY);
-        dc.setColor(daysColor, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(barRight, nameY, Graphics.FONT_XTINY,
-            daysText, Graphics.TEXT_JUSTIFY_RIGHT | Graphics.TEXT_JUSTIFY_VCENTER);
-
-        // Badge name (left) — page-flip ticker if too wide to fit next to
-        // the days indicator
-        var nameMaxWidth = barRight - barLeft - daysWidth - (w * 0.02).toNumber();
-        dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(barLeft, nameY, Graphics.FONT_XTINY,
-            pagedText(dc, nameStr, Graphics.FONT_XTINY, nameMaxWidth, tickCount), Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
+        var daysColor = drawNameAndDaysLine(dc, badge, nameY, barLeft, barRight, w, tickCount, "");
 
         if (hasTarget) {
             // Progress bar background
