@@ -162,8 +162,8 @@ class GarminBadgesView extends ScrollableView {
         var rowStart = 0.22;
 
         var upcomingCount = _upcoming.size();
-        if (upcomingCount > 2) {
-            upcomingCount = 2;
+        if (upcomingCount > 3) {
+            upcomingCount = 3;
         }
 
         _upcomingCount = upcomingCount;
