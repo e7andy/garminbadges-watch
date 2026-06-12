@@ -127,9 +127,11 @@ class GarminBadgesGlanceView extends WatchUi.GlanceView {
             }
         }
 
-        // Closest upcoming badge takes priority (it's the "next thing
-        // coming up"); otherwise fall back to the most urgent challenge
-        // (challenges are already sorted most-behind-first by the API).
+        // Priority: the next badge to do — active today (started within the
+        // last 24h, not yet joined) or starting within 7 days
+        // (upcoming[0]); otherwise the most urgent challenge ending within 7
+        // days; otherwise the most urgent challenge overall (challenges are
+        // already sorted most-behind-first by the API).
         if (upcoming.size() > 0) {
             var u = upcoming[0] as Lang.Dictionary;
             var name = u.get("name");
@@ -141,55 +143,89 @@ class GarminBadgesGlanceView extends WatchUi.GlanceView {
             _title     = nameStr + " " + BadgeFormat.formatDaysUntil(daysUntilVal);
             _hasTarget = false;
             _ratio     = 0.0;
-        } else if (challenges.size() > 0) {
-            var c = challenges[0] as Lang.Dictionary;
-            var name = c.get("name");
-            var nameStr = (name != null) ? name as Lang.String : "";
+        } else {
+            var endingSoon = findEndingSoon(challenges);
+            if (endingSoon != null) {
+                applyChallenge(endingSoon, " " + BadgeFormat.formatEndsIn(daysUntilEndOf(endingSoon)));
+            } else if (challenges.size() > 0) {
+                var c = challenges[0] as Lang.Dictionary;
 
-            var started = c.get("started");
-            var startedVal = (started == null) || (started as Lang.Boolean);
-            if (!startedVal) {
-                var daysUntilStart = c.get("days_until_start");
-                var daysUntilStartVal = (daysUntilStart != null) ? daysUntilStart as Lang.Number : 0;
-                nameStr += " " + BadgeFormat.formatDaysUntil(daysUntilStartVal);
-            }
-
-            _title = nameStr;
-
-            var targetVal = BadgeFormat.toFloatVal(c.get("target_value"), 0.0);
-            if (targetVal > 0) {
-                var progressVal = BadgeFormat.toFloatVal(c.get("progress_value"), 0.0);
-                var ratio = progressVal / targetVal;
-                if (ratio > 1.0) {
-                    ratio = 1.0;
+                var suffix = "";
+                var started = c.get("started");
+                var startedVal = (started == null) || (started as Lang.Boolean);
+                if (!startedVal) {
+                    var daysUntilStart = c.get("days_until_start");
+                    var daysUntilStartVal = (daysUntilStart != null) ? daysUntilStart as Lang.Number : 0;
+                    suffix = " " + BadgeFormat.formatDaysUntil(daysUntilStartVal);
                 }
-                if (ratio < 0.0) {
-                    ratio = 0.0;
-                }
-                _hasTarget = true;
-                _ratio     = ratio;
 
-                var daysBehindVal = BadgeFormat.toFloatVal(c.get("days_behind"), 0.0);
-                if (daysBehindVal <= -0.5) {
-                    _barColor = BadgeFormat.GREEN;
-                } else if (daysBehindVal >= 0.5) {
-                    _barColor = BadgeFormat.RED;
-                } else {
-                    _barColor = BadgeFormat.GRAY;
-                }
+                applyChallenge(c, suffix);
             } else {
+                _title     = "No challenges";
                 _hasTarget = false;
                 _ratio     = 0.0;
             }
-        } else {
-            _title     = "No challenges";
-            _hasTarget = false;
-            _ratio     = 0.0;
         }
 
         _hasData = true;
         _loading = false;
         _error   = "";
+    }
+
+    // days_until_end for a challenge, or 999 if missing (e.g. stale cache).
+    private function daysUntilEndOf(badge as Lang.Dictionary) as Lang.Number {
+        var due = badge.get("days_until_end");
+        return (due != null) ? due as Lang.Number : 999;
+    }
+
+    // The challenge with the soonest days_until_end (<= 7), or null if none
+    // qualify.
+    private function findEndingSoon(challenges as Lang.Array<Lang.Dictionary>) as Lang.Dictionary? {
+        var best = null;
+        var bestDue = 999;
+        for (var i = 0; i < challenges.size(); i += 1) {
+            var c = challenges[i] as Lang.Dictionary;
+            var due = daysUntilEndOf(c);
+            if (due <= 7 && due < bestDue) {
+                bestDue = due;
+                best = c;
+            }
+        }
+        return best;
+    }
+
+    // Sets _title (name + titleSuffix), _hasTarget, _ratio, and _barColor
+    // from a challenge dictionary.
+    private function applyChallenge(c as Lang.Dictionary, titleSuffix as Lang.String) as Void {
+        var name = c.get("name");
+        var nameStr = (name != null) ? name as Lang.String : "";
+        _title = nameStr + titleSuffix;
+
+        var targetVal = BadgeFormat.toFloatVal(c.get("target_value"), 0.0);
+        if (targetVal > 0) {
+            var progressVal = BadgeFormat.toFloatVal(c.get("progress_value"), 0.0);
+            var ratio = progressVal / targetVal;
+            if (ratio > 1.0) {
+                ratio = 1.0;
+            }
+            if (ratio < 0.0) {
+                ratio = 0.0;
+            }
+            _hasTarget = true;
+            _ratio     = ratio;
+
+            var daysBehindVal = BadgeFormat.toFloatVal(c.get("days_behind"), 0.0);
+            if (daysBehindVal <= -0.5) {
+                _barColor = BadgeFormat.GREEN;
+            } else if (daysBehindVal >= 0.5) {
+                _barColor = BadgeFormat.RED;
+            } else {
+                _barColor = BadgeFormat.GRAY;
+            }
+        } else {
+            _hasTarget = false;
+            _ratio     = 0.0;
+        }
     }
 
     function onUpdate(dc as Graphics.Dc) as Void {

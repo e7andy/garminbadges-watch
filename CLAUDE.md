@@ -216,8 +216,14 @@ All three extend `ScrollableView`/`ScrollDelegate` and share the same scroll/cli
 
 `GarminBadgesGlanceView` (registered via `GarminBadgesApp.getGlanceView()`) is the small preview shown in the watch's widget glance loop. It makes its own `/api/watch` request (same auth/fetch pattern as the main view) and shows:
 
-- **Line 1** — the title of the closest upcoming item: `upcoming[0].name` if `upcoming` is non-empty, otherwise the most urgent `challenges[0].name` (already sorted most-behind-first), otherwise "No challenges". If the shown item hasn't started yet (`upcoming[0]` always, or `challenges[0]` when `started` is `false`), "Today"/"Nd" (`days_until`/`days_until_start`) is appended to the title. If the text is wider than the glance, it's shown as a page-flip ticker via `BadgeFormat.pagedText()` (alternating whole-word chunks, `BadgeFormat.PAGE_DURATION_TICKS` ticks per page, driven by a 1Hz `Timer.Timer` started in `onShow()`/stopped in `onHide()`).
-- **Middle** — a progress bar for that same item, filled by `progress_value/target_value` (clamped 0–1). Fill color follows `days_behind` like the main page's offset indicator: green if ahead (`<= -0.5`), red if behind (`>= 0.5`), gray if on track. Empty if the item is an upcoming badge or has no numeric target (`target_value == 0`).
+- **Line 1** — the title of the most urgent badge "to do", in priority order:
+  1. `upcoming[0].name` if `upcoming` is non-empty — a badge that's active today (started within the last 24h, not yet joined) or starting within 7 days. "Today"/"Nd" (`days_until`) is appended to the title.
+  2. Otherwise, the `challenges` entry with the soonest `days_until_end` (`<= 7`, via `findEndingSoon()`), with "Ends Nd"/"Ends today" (`BadgeFormat.formatEndsIn()`) appended.
+  3. Otherwise, the most urgent `challenges[0]` (already sorted most-behind-first by the API), with "Today"/"Nd" (`days_until_start`) appended if `started` is `false`.
+  4. Otherwise, "No challenges".
+
+  If the text is wider than the glance, it's shown as a page-flip ticker via `BadgeFormat.pagedText()` (alternating whole-word chunks, `BadgeFormat.PAGE_DURATION_TICKS` ticks per page, driven by a 1Hz `Timer.Timer` started in `onShow()`/stopped in `onHide()`).
+- **Middle** — a progress bar for that same item, filled by `progress_value/target_value` (clamped 0–1) via the shared `applyChallenge()` helper. Fill color follows `days_behind` like the main page's offset indicator: green if ahead (`<= -0.5`), red if behind (`>= 0.5`), gray if on track. Empty if the item is an `upcoming` badge or has no numeric target (`target_value == 0`).
 - **Line 2** — count of `challenges` with `days_behind > 0`, shown as "`N` behind" (red if `N > 0`, gray otherwise).
 
 Selecting/tapping the glance uses the default `GlanceViewDelegate` behavior (no custom delegate registered), which opens the app's `getInitialView()`.
