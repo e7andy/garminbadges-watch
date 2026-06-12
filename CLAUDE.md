@@ -87,7 +87,7 @@ Until the app is published, sideloaded builds can't show a Settings screen in Ga
 
 These are uploaded directly via the developer portal — they are not part of the build/`.iq` package.
 
-- **App Store icon** — 500x500px, sRGB. Shown in store listings and search results. Allow ~10px padding, center the icon, and use a simple **solid (non-black, non-transparent) background** — this is a different design from `resources/drawables/launcher_icon.svg` (the small in-app icon, which has a black background and is fine as-is for that purpose).
+- **App Store icon** — 500x500px, sRGB. Shown in store listings and search results. Allow ~10px padding, center the icon, and use a simple **solid (non-transparent) background** — this is a different design from `resources/drawables/launcher_icon.svg` (the small in-app/glance icon, which has a transparent background so it blends with the device's launcher/glance UI).
 - **On-device icons** (optional) — 128x128px, sRGB, two variants: a full-color one for OLED displays and a low-color one (64-color palette) for memory-in-pixel displays.
 - **Hero/banner image** (optional, promotional) — 1440x720px.
 - **Screenshots** — each ≤500x500px and ≤150KB, captured from the simulator (`connectiq.bat` + `monkeydo.bat`, then Win+Shift+S to capture and crop/resize). Cover the app's main views, on at least one round device (most of `manifest.xml`'s targets are round):
