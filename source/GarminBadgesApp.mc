@@ -19,6 +19,7 @@ class GarminBadgesApp extends Application.AppBase {
         return [view, new GarminBadgesDelegate(view)];
     }
 
+    (:glance)
     function getGlanceView() as [WatchUi.GlanceView] or [WatchUi.GlanceView, WatchUi.GlanceViewDelegate] or Null {
         return [new GarminBadgesGlanceView()];
     }

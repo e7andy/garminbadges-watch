@@ -3,7 +3,9 @@ import Toybox.Lang;
 
 // Persists the latest /api/watch response so the main view and glance can
 // show data immediately on launch while a fresh copy is fetched in the
-// background.
+// background. Annotated (:glance) since GarminBadgesGlanceView (also
+// (:glance)) uses this too.
+(:glance)
 module BadgeCache {
 
     const KEY = "watchData";

@@ -8,6 +8,13 @@ import Toybox.WatchUi;
 
 // Glance preview shown in the widget glance loop. Selecting it (default
 // GlanceViewDelegate behavior) opens the app's main view.
+//
+// Annotated (:glance) so the compiler builds a separate, smaller binary for
+// glance mode that excludes the main-app-only views/delegates (GarminBadgesView,
+// the "All <Section>" pages, detail pages, etc.) — devices with a 32KB glance
+// memory limit (e.g. Instinct 2/2X/3 Solar) otherwise OOM trying to load the
+// entire app as the glance.
+(:glance)
 class GarminBadgesGlanceView extends WatchUi.GlanceView {
 
     private var _loading   as Lang.Boolean = true;

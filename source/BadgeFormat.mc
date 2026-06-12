@@ -4,7 +4,9 @@ import Toybox.Math;
 import Toybox.System;
 
 // Shared formatting helpers and challenge-row drawing for the main and
-// all-challenges pages, which use the same row layout.
+// all-challenges pages, which use the same row layout. Annotated (:glance)
+// since GarminBadgesGlanceView (also (:glance)) uses several of these too.
+(:glance)
 module BadgeFormat {
 
     const RED       = 0xe53935;

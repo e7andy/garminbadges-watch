@@ -32,7 +32,7 @@ Data is fetched live from the GarminBadges API using your account's API key, and
 
 ## Supported devices
 
-Fenix 6/7/8, Epix 2, Enduro, Venu 2/3, Vivoactive 4/5/6, Forerunner 245–970, Instinct 2/3, Marq 2, and variants.
+Fenix 6/7/8, Epix 2, Enduro, Venu 2/3, Vivoactive 4/5/6, Forerunner 245–970, Instinct 3 AMOLED, Marq 2, and variants. (Instinct 2/2X/2S/3 Solar are not supported — their 32KB glance memory limit and/or small screen don't fit the current layout.)
 
 ## Development
 
