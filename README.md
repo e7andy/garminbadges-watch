@@ -40,7 +40,7 @@ Fenix 6/7/8, Epix 2, Enduro, Venu 2/3, Vivoactive 4/5/6, Forerunner 245–970, I
 
 ```powershell
 $SDK = "C:\Users\<you>\AppData\Roaming\Garmin\ConnectIQ\Sdks\<sdk-version>"
-& "$SDK\bin\monkeyc.bat" -f jungle.xml -d fenix7 -o bin\GarminBadges.prg -y <path-to-developer-key> -l 2
+& "$SDK\bin\monkeyc.bat" -f jungle.xml -d fenix7 -o bin\BadgeTracker.prg -y <path-to-developer-key> -l 2
 ```
 
 ### Run in simulator
@@ -50,7 +50,7 @@ $SDK = "C:\Users\<you>\AppData\Roaming\Garmin\ConnectIQ\Sdks\<sdk-version>"
 & "$SDK\bin\connectiq.bat"
 
 # Then sideload the built .prg
-& "$SDK\bin\monkeydo.bat" bin\GarminBadges.prg fenix7
+& "$SDK\bin\monkeydo.bat" bin\BadgeTracker.prg fenix7
 ```
 
 The app will show "Open Garmin Connect app to set API key" until you set the `ApiKey` property via **File → Edit Persistent Storage → Edit Application.Properties data**.
@@ -61,7 +61,7 @@ Since the app defines a glance (`getGlanceView()`), the simulator opens directly
 
 1. Build the `.prg` as above (it's signed with your developer key, so it's ready to sideload).
 2. Connect the watch via USB — it mounts as a USB drive (usually "GARMIN").
-3. Copy `bin/GarminBadges.prg` into the `GARMIN/APPS/` folder on the device (create it if missing).
+3. Copy `bin/BadgeTracker.prg` into the `GARMIN/APPS/` folder on the device (create it if missing).
 4. Safely eject/disconnect the watch — it'll briefly show "Installing...", then the app appears in your apps list.
 5. To see the glance, hold the menu button on the app in the apps list and look for "Add to Glances" (wording varies by device), then swipe up from the watch face to find it in the glance loop.
 

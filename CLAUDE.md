@@ -39,10 +39,10 @@ garminbadges-watch/
 
 ```powershell
 $SDK = "C:\Users\e7and\AppData\Roaming\Garmin\ConnectIQ\Sdks\connectiq-sdk-win-9.2.0-2026-06-09-92a1605b2"
-& "$SDK\bin\monkeyc.bat" -f jungle.xml -d fenix7 -o bin\GarminBadges.prg -y "C:\Users\e7and\My Drive\Backup\garmin\developer_key" -l 2
+& "$SDK\bin\monkeyc.bat" -f jungle.xml -d fenix7 -o bin\BadgeTracker.prg -y "C:\Users\e7and\My Drive\Backup\garmin\developer_key" -l 2
 ```
 
-Output goes to `bin/GarminBadges.prg` (ignored by `.gitignore`).
+Output goes to `bin/BadgeTracker.prg` (ignored by `.gitignore`).
 
 ## Publishing to the Connect IQ Store
 
@@ -53,10 +53,10 @@ Until the app is published, sideloaded builds can't show a Settings screen in Ga
 3. **Build a release package** covering all supported devices (the full `<iq:products>` list in `manifest.xml`), with debug info stripped:
    ```powershell
    $SDK = "C:\Users\e7and\AppData\Roaming\Garmin\ConnectIQ\Sdks\connectiq-sdk-win-9.2.0-2026-06-09-92a1605b2"
-   & "$SDK\bin\monkeyc.bat" -f jungle.xml -o bin\GarminBadges.iq -y "C:\Users\e7and\My Drive\Backup\garmin\developer_key" -e -r
+   & "$SDK\bin\monkeyc.bat" -f jungle.xml -o bin\BadgeTracker.iq -y "C:\Users\e7and\My Drive\Backup\garmin\developer_key" -e -r
    ```
    `-e`/`--package-app` produces an `.iq` store package (instead of a single-device `.prg`); `-r`/`--release` strips debug info. Omit `-d` — `-d` doesn't accept a comma-separated device list in this SDK version, so leaving it out builds for every device in `manifest.xml`'s `<iq:products>` automatically (prints "N OUT OF 101 DEVICES BUILT" progress).
-4. **Upload `bin/GarminBadges.iq`** to the app listing via the Developer Portal's "Upload App" / App Versions tab.
+4. **Upload `bin/BadgeTracker.iq`** to the app listing via the Developer Portal's "Upload App" / App Versions tab.
 5. **Fill in store listing details**: name, description, category, supported devices (should match `manifest.xml`), screenshots, app store icon, and a privacy policy URL — use `https://garminbadges.com/privacy`. See "Store listing content" and "Required images" below.
 6. **Submit for review.** Garmin reviews submissions (can take days). Once approved and published, users install via the Connect IQ Store / Garmin Connect Mobile app, and Connect Mobile's Settings screen will work (pulling `ApiKey`/`ApiUrl`/`MaxDurationDays` from the now-registered schema).
 7. **Future updates** — repeat steps 3–4 (build + upload a new `.iq`); the portal auto-increments the version on each upload, no manifest version field to bump.
@@ -99,7 +99,7 @@ These are uploaded directly via the developer portal — they are not part of th
 & "$SDK\bin\connectiq.bat"
 
 # Sideload after building
-& "$SDK\bin\monkeydo.bat" bin\GarminBadges.prg fenix7
+& "$SDK\bin\monkeydo.bat" bin\BadgeTracker.prg fenix7
 ```
 
 Set `ApiKey` in the simulator via **File → Edit Persistent Storage → Edit Application.Properties data**. The app shows an error message until a key is provided.
@@ -112,7 +112,7 @@ Since the app defines a glance (`getGlanceView()`), the simulator opens directly
 
 1. Build the `.prg` (same command as above — it's signed with the developer key).
 2. Connect the watch via USB; it mounts as a USB drive ("GARMIN").
-3. Copy `bin/GarminBadges.prg` into `GARMIN/APPS/` (create the folder if it doesn't exist).
+3. Copy `bin/BadgeTracker.prg` into `GARMIN/APPS/` (create the folder if it doesn't exist).
 4. Eject/disconnect — the watch shows "Installing..." then the app appears in the apps list.
 5. To add it to the glance loop, hold the menu button on the app in the apps list and choose "Add to Glances" (wording varies by device), then swipe up from the watch face.
 
