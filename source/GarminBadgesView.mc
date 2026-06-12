@@ -7,10 +7,10 @@ import Toybox.WatchUi;
 
 class GarminBadgesView extends ScrollableView {
 
-    private const TOP_MARGIN_FRAC       = 0.04;
+    private const TOP_MARGIN_FRAC       = 0.05;
     private const TITLE_TO_DIVIDER_FRAC = 0.045;
     private const DIVIDER_TO_ROWS_FRAC  = 0.02;
-    private const SECTION_GAP_FRAC      = 0.025;
+    private const SECTION_GAP_FRAC      = 0.035;
     private const MAIN_ROW_HEIGHT_FRAC  = 0.07;
 
     private var _loading    as Lang.Boolean = true;
