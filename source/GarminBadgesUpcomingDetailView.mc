@@ -63,7 +63,7 @@ class GarminBadgesUpcomingDetailView extends WatchUi.View {
         if (durationVal > 0) {
             var durationY = contentTop + smallFontHeight / 2 + textGap + xtinyFontHeight / 2;
             dc.drawText(cx, durationY, Graphics.FONT_XTINY,
-                durationVal.toString() + "-day challenge", justify);
+                "Duration: " + durationVal.toString() + "d", justify);
         }
     }
 }

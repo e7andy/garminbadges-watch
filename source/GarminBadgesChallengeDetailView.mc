@@ -133,7 +133,7 @@ class GarminBadgesChallengeDetailView extends WatchUi.View {
             var durationY = contentTop + smallFontHeight / 2 + textGap + xtinyFontHeight / 2;
             dc.setColor(BadgeFormat.GRAY, Graphics.COLOR_TRANSPARENT);
             dc.drawText(cx, durationY, Graphics.FONT_XTINY,
-                durationVal.toString() + "-day challenge", justify);
+                "Duration: " + durationVal.toString() + "d", justify);
         }
     }
 }
