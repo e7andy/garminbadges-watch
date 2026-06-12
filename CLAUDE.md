@@ -18,7 +18,7 @@ garminbadges-watch/
 │   ├── GarminBadgesApp.mc                   # AppBase entry point; creates view + delegate, getGlanceView() for the glance
 │   ├── GarminBadgesView.mc                  # Main page: UI rendering (programmatic via dc.draw*) + HTTP fetch + 3-section selection state
 │   ├── GarminBadgesDelegate.mc              # Input for the main page (see "Navigation & selection")
-│   ├── GarminBadgesAllUpcomingView.mc       # "Next Upcoming" page: next 10 upcoming badges, scrollable
+│   ├── GarminBadgesAllUpcomingView.mc       # "Next Badges" page: today's just-started + next upcoming badges (up to 10), scrollable
 │   ├── GarminBadgesAllUpcomingDelegate.mc   # Input for the "Next Upcoming" page (see "Navigation & selection")
 │   ├── GarminBadgesAllEndingSoonView.mc     # "Ending Soon" page: all challenges ending within 7 days, scrollable
 │   ├── GarminBadgesAllEndingSoonDelegate.mc # Input for the "Ending Soon" page (see "Navigation & selection")
@@ -130,7 +130,7 @@ Since the app defines a glance (`getGlanceView()`), the simulator opens directly
 - **`Communications` permission** covers HTTP; there is no separate `InternetConnection` permission.
 - **No layout XML** — all drawing is programmatic in `onUpdate()` using `dc.drawText()` / `dc.drawLine()`. Coordinates use fractional screen height (e.g. `h * 0.31`) to scale across device sizes.
 - **Scrolling** — the challenges list is clipped with `dc.setClip()`/`dc.clearClip()` and offset by `_scrollOffset` (pixels). `_maxScroll` is recomputed each `onUpdate()` from row count vs. viewport height. The delegate's `onNextPage()`/`onPreviousPage()` (UP/DOWN buttons) call `view.scrollBy()`. Touch dragging uses `onDrag()` (`DragEvent`, requires `minApiLevel 3.3.0`) for 1:1 finger tracking via `view.scrollBy(-deltaY)`, and `onFlick()` (`FlickEvent`) calls `view.startMomentum(velocity)` to keep scrolling with deceleration (`onMomentumTick()`, 30ms `Timer`, 5% friction per tick, stops below 10px/s or at a list edge).
-- **Long badge names** — `BadgeFormat.pagedText()` shows the full name if it fits, otherwise a page-flip ticker (alternating whole-word chunks, `BadgeFormat.PAGE_DURATION_TICKS` ticks per page). `ScrollableView` drives this via a 1Hz `_tickerTimer` started in `onShow()`/stopped in `onHide()` (`_tickCount`, `tickCount()`). Used for challenge row names (`BadgeFormat.drawChallengeRow()`/`drawCompactRow()`, on the main page and the "All <Section>" pages) and "UPCOMING" row names on the main and "Next Upcoming" pages.
+- **Long badge names** — `BadgeFormat.pagedText()` shows the full name if it fits, otherwise a page-flip ticker (alternating whole-word chunks, `BadgeFormat.PAGE_DURATION_TICKS` ticks per page). `ScrollableView` drives this via a 1Hz `_tickerTimer` started in `onShow()`/stopped in `onHide()` (`_tickCount`, `tickCount()`). Used for challenge row names (`BadgeFormat.drawChallengeRow()`/`drawCompactRow()`, on the main page and the "All <Section>" pages) and "NEXT BADGES" row names on the main and "Next Badges" pages.
 - **`$message` is reserved in Monkey C** if using Monkey C templates — use a different variable name.
 - **Cross-class const access** — a `const` declared at class level (e.g. `const SECTION_UPCOMING = 0;` inside `class GarminBadgesView`) can't be referenced from another class as `GarminBadgesView.SECTION_UPCOMING` (`Cannot find symbol ':SECTION_UPCOMING' on class definition`). Put consts that need to be shared across classes in a `module` (e.g. `BadgeFormat.SECTION_UPCOMING`) instead — `Module.CONST` access works reliably.
 - **Developer key** is at `C:\Users\e7and\My Drive\Backup\garmin\developer_key`.
@@ -151,7 +151,9 @@ Response shape:
 }
 ```
 
-`challenges` is up to 20 in-progress, time-limited badges (earned_date IS NULL, with both `start_date` and `end_date` set). They're sorted with started badges (`start_date <= now`) first — ranked descending by "days behind schedule", `days_behind` = `(elapsed_fraction - progress_fraction) * total_days` of the challenge window — followed by badges whose `start_date` is still in the future, last. `started` is `start_date <= now`; for not-yet-started badges, `days_until_start` is `ceil(hours until start_date / 24)` (`0` for already-started badges). `days_until_end` is `ceil(hours until end_date / 24)`, signed: positive = ends in the future, `0` = ends today, negative = overdue. `upcoming` is up to 10 badges with `start_date` in the next 7 days, sorted by `start_date` ascending. Either array may be empty.
+`challenges` is up to 20 in-progress, time-limited badges (earned_date IS NULL, with both `start_date` and `end_date` set). They're sorted with started badges (`start_date <= now`) first — ranked descending by "days behind schedule", `days_behind` = `(elapsed_fraction - progress_fraction) * total_days` of the challenge window — followed by badges whose `start_date` is still in the future, last. `started` is `start_date <= now`; for not-yet-started badges, `days_until_start` is `ceil(hours until start_date / 24)` (`0` for already-started badges). `days_until_end` is `ceil(hours until end_date / 24)`, signed: positive = ends in the future, `0` = ends today, negative = overdue.
+
+`upcoming` is up to 10 badges, composed of two groups: first, badges whose `start_date` was within the last 24 hours and that the user hasn't joined yet (no `user_badges` row) — these get `days_until: 0` ("Today"), so a badge doesn't silently disappear from the response the moment it starts before the user joins it; then, badges with `start_date` in the next 7 days (not yet started), sorted by `start_date` ascending. Either array may be empty.
 
 `duration_days` is the challenge window length (`end_date - start_date`, in days). For `upcoming` badges with no `end_date`, it's `0`. The view filters out any item whose `duration_days` exceeds the `MaxDurationDays` setting (`0` = no limit) via `filterByDuration()` in `onReceive()`.
 
@@ -163,7 +165,7 @@ Some challenges (e.g. "finish in the top 3" podium challenges) have no numeric t
 
 The main page has three sections, each hidden entirely when its item list is empty:
 
-- **UPCOMING** — up to 3 `upcoming` badges (centered rows, name + `formatDaysUntil(days_until)`).
+- **NEXT BADGES** — up to 3 `upcoming` badges (centered rows, name + `formatDaysUntil(days_until)`). Rows where `days_until == 0` ("Today" — started within the last 24h, not yet joined) are drawn in red via `BadgeFormat.drawUpcomingRow()` so they stand out from the "starts in Nd" rows.
 - **ENDING SOON** — up to 3 `challenges` whose `days_until_end <= 7` (including overdue), sorted soonest-ending first via `GarminBadgesView.computeEndingSoon()`. Compact rows: name + "Ends Nd"/"Ends today" on the left, the `days_behind` indicator on the right.
 - **CHALLENGES** — up to 5 `challenges` (existing most-behind-first sort). Compact rows: name + the `days_behind` indicator only, no progress bar.
 
@@ -171,7 +173,7 @@ Each compact row's `days_behind` indicator is "+Nd"/"-Nd"/"0d" (red/green/gray).
 
 ## Navigation & selection
 
-The main page (`GarminBadgesView`) has section-level UP/DOWN selection across its three sections (UPCOMING / ENDING SOON / CHALLENGES, in `BadgeFormat.SECTION_UPCOMING/SECTION_ENDING_SOON/SECTION_CHALLENGES`) — not individual rows:
+The main page (`GarminBadgesView`) has section-level UP/DOWN selection across its three sections (NEXT BADGES / ENDING SOON / CHALLENGES, in `BadgeFormat.SECTION_UPCOMING/SECTION_ENDING_SOON/SECTION_CHALLENGES`) — not individual rows:
 
 - Each `onUpdate()` rebuilds `_sectionIds`/`_sectionTops`/`_sectionBottoms` (parallel arrays — visible section ids in display order, and the pixel y-bounds of each section's row block), skipping any section whose item list is empty.
 - `_selectedSectionIdx` indexes into `_sectionIds`. `GarminBadgesDelegate.onNextPage()`/`onPreviousPage()` (DOWN/UP) call `view.moveSelection(±1)`, which clamps `_selectedSectionIdx` to `[0, _sectionIds.size() - 1]`.
@@ -183,7 +185,7 @@ SELECT/tap on any row opens that row's section as a full list page — there's n
 - `GarminBadgesView.sectionAt(y)` returns the section id whose row block contains screen y-coordinate `y`, or `-1`.
 - `GarminBadgesView.selectedSection()` returns the currently UP/DOWN-selected section id (`_sectionIds[_selectedSectionIdx]`), or `-1` if no sections are visible.
 - `GarminBadgesDelegate.openSection(sectionId)` maps a section id to `view.showAllUpcoming()` / `showAllEndingSoon()` / `showAllChallenges()`, each of which pushes the corresponding "All <Section>" view + delegate via `WatchUi.pushView()`.
-- On an "All <Section>" page, SELECT/tap on a row opens `GarminBadgesChallengeDetailView` (Ending Soon / All Challenges) or `GarminBadgesUpcomingDetailView` (Next Upcoming). BACK pops back to the main page (default `BehaviorDelegate` behavior).
+- On an "All <Section>" page, SELECT/tap on a row opens `GarminBadgesChallengeDetailView` (Ending Soon / All Challenges) or `GarminBadgesUpcomingDetailView` (Next Badges). BACK pops back to the main page (default `BehaviorDelegate` behavior).
 
 Input dispatch:
 
@@ -195,7 +197,7 @@ Input dispatch:
 
 Each main-page section has a corresponding full list page, pushed via `WatchUi.pushView(view, delegate, WatchUi.SLIDE_LEFT)` from `GarminBadgesView.showAllUpcoming()`/`showAllEndingSoon()`/`showAllChallenges()`:
 
-- **`GarminBadgesAllUpcomingView`** ("NEXT UPCOMING") — lists all of `_upcoming` (up to 10, the API's full `upcoming` array), using the same centered single-line row format as the main page's UPCOMING rows (name + `formatDaysUntil(days_until)`, paged). Title is "NEXT UPCOMING" rather than "ALL UPCOMING" since the list isn't exhaustive — just the next 10. Uses its own `ALL_ROW_HEIGHT_FRAC = 0.12` row height. `upcomingAt(y)` maps a tap to an upcoming badge; SELECT/tap pushes `GarminBadgesUpcomingDetailView` via `showUpcomingDetail()`.
+- **`GarminBadgesAllUpcomingView`** ("NEXT BADGES") — lists all of `_upcoming` (up to 10, the API's full `upcoming` array), using the same centered single-line row format as the main page's NEXT BADGES rows (name + `formatDaysUntil(days_until)`, paged, with `days_until == 0` rows highlighted in red). Title is "NEXT BADGES" rather than "ALL UPCOMING" since the list isn't exhaustive — just the next 10. Uses its own `ALL_ROW_HEIGHT_FRAC = 0.12` row height. `upcomingAt(y)` maps a tap to an upcoming badge; SELECT/tap pushes `GarminBadgesUpcomingDetailView` via `showUpcomingDetail()`.
 - **`GarminBadgesAllEndingSoonView`** ("ENDING SOON") — lists all of `_endingSoon` (every challenge with `days_until_end <= 7`, already sorted soonest-first), using full `BadgeFormat.drawChallengeRow()` rows (progress bar + fraction) at the inherited `ROW_HEIGHT_FRAC = 0.255`. `challengeAt(y)` maps a tap to a challenge; SELECT/tap pushes `GarminBadgesChallengeDetailView` via `showChallengeDetail()`.
 - **`GarminBadgesAllChallengesView`** ("ALL CHALLENGES") — lists all of `_challenges` (up to 20, the API's full `challenges` array, most-urgent-first), using the same full-row layout as Ending Soon. `challengeAt(y)`/`showChallengeDetail()` as above.
 

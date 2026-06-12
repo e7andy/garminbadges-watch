@@ -2,9 +2,10 @@ import Toybox.Graphics;
 import Toybox.Lang;
 import Toybox.WatchUi;
 
-// "All Upcoming" page — the next (up to 10) badges starting within 7 days,
-// sorted soonest-first. Reached by selecting/tapping the UPCOMING section on
-// the main page.
+// "Next Badges" page — badges that started within the last 24h and aren't
+// yet joined ("Today", highlighted), followed by the next (up to 10 total)
+// badges starting within 7 days, sorted soonest-first. Reached by
+// selecting/tapping the NEXT BADGES section on the main page.
 class GarminBadgesAllUpcomingView extends ScrollableView {
 
     private var _upcoming as Lang.Array<Lang.Dictionary>;
@@ -29,11 +30,11 @@ class GarminBadgesAllUpcomingView extends ScrollableView {
 
         var justify = Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER;
 
-        // Title — "NEXT UPCOMING" rather than "ALL UPCOMING" since the API
+        // Title — "NEXT BADGES" rather than "ALL UPCOMING" since the API
         // caps this list at the next 10, not the full set.
         dc.setColor(BadgeFormat.RED, Graphics.COLOR_TRANSPARENT);
         dc.drawText(cx, (h * 0.08 + 0.5).toNumber(), Graphics.FONT_XTINY,
-            "NEXT UPCOMING", justify);
+            "NEXT BADGES", justify);
 
         // Divider
         dc.setColor(BadgeFormat.DIM, Graphics.COLOR_TRANSPARENT);

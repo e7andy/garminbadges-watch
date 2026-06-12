@@ -256,7 +256,7 @@ class GarminBadgesView extends ScrollableView {
     private function drawUpcomingSection(dc as Graphics.Dc, w as Lang.Number, h as Lang.Number, startY as Lang.Float, count as Lang.Number) as Lang.Float {
         var sectionIdx = _sectionIds.size();
 
-        BadgeFormat.drawSectionTitle(dc, w, h, startY, "UPCOMING");
+        BadgeFormat.drawSectionTitle(dc, w, h, startY, "NEXT BADGES");
         BadgeFormat.drawSectionDivider(dc, w, h, startY + TITLE_TO_DIVIDER_FRAC);
 
         var rowsTopFrac  = startY + TITLE_TO_DIVIDER_FRAC + DIVIDER_TO_ROWS_FRAC;

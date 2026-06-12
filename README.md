@@ -6,7 +6,7 @@ A Garmin Connect IQ watch app that shows your [GarminBadges](https://garminbadge
 
 The main page has up to three sections, each hidden when it has nothing to show:
 
-- **Upcoming** — up to 3 badges/challenges starting within the next 7 days, with a "Today"/"Nd" countdown.
+- **Next Badges** — up to 3 badges starting within the next 7 days, with a "Today"/"Nd" countdown. Badges that started within the last 24 hours and haven't been joined yet also show here as "Today", highlighted in red so they stand out.
 - **Ending Soon** — up to 3 in-progress challenges ending within the next 7 days (including overdue ones), soonest first, each showing "Ends Nd"/"Ends today" plus a days-ahead/behind indicator.
 - **Challenges** — your most urgent in-progress challenges (up to 5), ranked by how many days behind schedule you are, each with a days-ahead/behind indicator.
 
@@ -16,8 +16,8 @@ Data is fetched live from the GarminBadges API using your account's API key, and
 
 ## Navigation
 
-- **UP/DOWN** move the highlighted section between Upcoming, Ending Soon, and Challenges (whichever are visible).
-- **SELECT** (or tap any row) opens a full list page for that row's section — "Next Upcoming", "Ending Soon", or "All Challenges" — showing more detail (progress bars, fractions) and letting you scroll with UP/DOWN or drag/flick. From there, SELECT/tap a row opens its detail page (full progress, schedule status, duration). BACK returns to the previous page.
+- **UP/DOWN** move the highlighted section between Next Badges, Ending Soon, and Challenges (whichever are visible).
+- **SELECT** (or tap any row) opens a full list page for that row's section — "Next Badges", "Ending Soon", or "All Challenges" — showing more detail (progress bars, fractions) and letting you scroll with UP/DOWN or drag/flick. From there, SELECT/tap a row opens its detail page (full progress, schedule status, duration). BACK returns to the previous page.
 - **MENU** (or hold START/STOP, or tap the menu icon in the top-right corner) opens an options menu to refresh the data.
 
 ## Setup
@@ -90,8 +90,8 @@ garminbadges-watch/
 │   ├── GarminBadgesApp.mc                   # Entry point (AppBase)
 │   ├── GarminBadgesView.mc                  # Main page: UI rendering + API fetch + 3-section selection state
 │   ├── GarminBadgesDelegate.mc              # Main page input (SELECT/tap = open that section's list page, UP/DOWN = move section selection, MENU/hold START = options menu)
-│   ├── GarminBadgesAllUpcomingView.mc       # "Next Upcoming" page: next 10 upcoming badges
-│   ├── GarminBadgesAllUpcomingDelegate.mc   # "Next Upcoming" page input (SELECT/tap = open detail page, UP/DOWN/drag/flick = scroll, BACK = pop)
+│   ├── GarminBadgesAllUpcomingView.mc       # "Next Badges" page: today's just-started + next upcoming badges (up to 10)
+│   ├── GarminBadgesAllUpcomingDelegate.mc   # "Next Badges" page input (SELECT/tap = open detail page, UP/DOWN/drag/flick = scroll, BACK = pop)
 │   ├── GarminBadgesAllEndingSoonView.mc     # "Ending Soon" page: all challenges ending within 7 days
 │   ├── GarminBadgesAllEndingSoonDelegate.mc # "Ending Soon" page input (SELECT/tap = open detail page, UP/DOWN/drag/flick = scroll, BACK = pop)
 │   ├── GarminBadgesAllChallengesView.mc     # "All Challenges" page: all challenges, most urgent first

@@ -271,11 +271,18 @@ module BadgeFormat {
         var dueVal  = (due != null) ? due as Lang.Number : 0;
         var dueText = formatDaysUntil(dueVal);
 
+        // Badges that started within the last 24h and aren't yet joined come
+        // back as "Today" (days_until == 0) — highlight them in red so they
+        // stand out from the "starts in Nd" rows.
+        var isToday  = (dueVal == 0);
+        var textColor = isToday ? RED : Graphics.COLOR_WHITE;
+        var dueColor  = isToday ? RED : GRAY;
+
         var shape = System.getDeviceSettings().screenShape;
         if (shape == System.SCREEN_SHAPE_ROUND || shape == System.SCREEN_SHAPE_SEMI_ROUND) {
             var text     = nameStr + " " + dueText;
             var maxWidth = textMaxWidth(w, h, rowY);
-            dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
+            dc.setColor(textColor, Graphics.COLOR_TRANSPARENT);
             dc.drawText(w / 2, rowY, Graphics.FONT_XTINY,
                 pagedText(dc, text, Graphics.FONT_XTINY, maxWidth, tickCount),
                 Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
@@ -285,13 +292,13 @@ module BadgeFormat {
         var barLeft  = (w * 0.12).toNumber();
         var barRight = (w * 0.88).toNumber();
 
-        dc.setColor(GRAY, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(dueColor, Graphics.COLOR_TRANSPARENT);
         dc.drawText(barRight, rowY, Graphics.FONT_XTINY,
             dueText, Graphics.TEXT_JUSTIFY_RIGHT | Graphics.TEXT_JUSTIFY_VCENTER);
 
         var dueWidth     = dc.getTextWidthInPixels(dueText, Graphics.FONT_XTINY);
         var nameMaxWidth = barRight - barLeft - dueWidth - (w * 0.02).toNumber();
-        dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(textColor, Graphics.COLOR_TRANSPARENT);
         dc.drawText(barLeft, rowY, Graphics.FONT_XTINY,
             pagedText(dc, nameStr, Graphics.FONT_XTINY, nameMaxWidth, tickCount),
             Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
