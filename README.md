@@ -18,7 +18,7 @@ Data is fetched live from the GarminBadges API using your account's API key, and
 ## Setup
 
 1. Install the app on your watch via the Connect IQ Store (or sideload the `.prg` for development).
-2. Open the **Garmin Connect** app on your phone → **Devices** → select your watch → **More** → **Connect IQ Store** (or **Apps**) → **Garmin Badges** → the gear/**Settings** icon.
+2. Open the **Garmin Connect** app on your phone → **Devices** → select your watch → **More** → **Connect IQ Store** (or **Apps**) → **Badge Tracker** → the gear/**Settings** icon.
 3. Configure these settings:
    - **API Key** — paste your key from [garminbadges.com/dashboard](https://garminbadges.com/dashboard) (Settings → API Key). Required — the app shows an error until this is set.
    - **API URL** — defaults to `https://api.garminbadges.com/api`. Leave it unless you're pointing at a self-hosted/dev backend.
@@ -65,7 +65,7 @@ Since the app defines a glance (`getGlanceView()`), the simulator opens directly
 4. Safely eject/disconnect the watch — it'll briefly show "Installing...", then the app appears in your apps list.
 5. To see the glance, hold the menu button on the app in the apps list and look for "Add to Glances" (wording varies by device), then swipe up from the watch face to find it in the glance loop.
 
-**Note on settings:** Garmin Connect Mobile's Apps → Garmin Badges → Settings screen only works for apps registered in the Connect IQ Developer Portal — a sideloaded `.prg` shows "No Settings" with no on-watch way to enter your API key. To test on a real device, temporarily set your API key as the default value of `ApiKey` in `resources/properties.xml` before building, and revert it afterwards.
+**Note on settings:** Garmin Connect Mobile's Apps → Badge Tracker → Settings screen only works for apps registered in the Connect IQ Developer Portal — a sideloaded `.prg` shows "No Settings" with no on-watch way to enter your API key. To test on a real device, temporarily set your API key as the default value of `ApiKey` in `resources/properties.xml` before building, and revert it afterwards.
 
 ### Publishing to the Connect IQ Store
 

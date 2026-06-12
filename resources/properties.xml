@@ -7,7 +7,7 @@
   </properties>
 
   <strings>
-    <string id="AppName">Garmin Badges</string>
+    <string id="AppName">Badge Tracker</string>
     <string id="ApiKeyTitle">API Key</string>
     <string id="ApiUrlTitle">API URL</string>
     <string id="MaxDurationDaysTitle">Max Duration (days, 0 = no limit)</string>
