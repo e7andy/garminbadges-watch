@@ -72,10 +72,11 @@ Until the app is published, sideloaded builds can't show a Settings screen in Ga
 
   > Track your [garminbadges.com](https://garminbadges.com) challenge progress right from your wrist.
   >
-  > - See your most urgent in-progress challenges, ranked by how far ahead or behind schedule you are, each with a live progress bar (e.g. 7/10 km).
-  > - An UPCOMING section gives you a heads-up on challenges starting in the next 7 days.
-  > - Select or tap any challenge for full details: progress, percentage, schedule status, and duration.
-  > - A glance widget on your watch face loop shows your next challenge (or the most urgent one) and how many challenges you're currently behind on.
+  > - NEXT BADGES gives you a heads-up on badges starting within 7 days — and flags any that started in the last 24 hours and still need joining, highlighted in red so they don't slip by.
+  > - ENDING SOON surfaces your in-progress challenges that wrap up within a week, soonest first, each with an ahead/behind-schedule indicator.
+  > - CHALLENGES lists your most urgent in-progress challenges, ranked by how far ahead or behind schedule you are, each with a live progress bar (e.g. 7/10 km).
+  > - Select or tap any row for full details: progress, percentage, schedule status, and duration.
+  > - A glance widget on your watch face loop shows your next badge or most urgent challenge with a progress bar, plus how many challenges are ending soon and how many you're behind on.
   > - Optionally hide long-running challenges by setting a maximum duration in Settings.
   >
   > Requires a free GarminBadges account — get your API key at garminbadges.com/dashboard (Settings → API Key) and enter it in this app's settings in Garmin Connect.
