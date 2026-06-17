@@ -18,7 +18,7 @@ garminbadges-watch/
 │   ├── GarminBadgesApp.mc                   # AppBase entry point; creates view + delegate, getGlanceView() for the glance
 │   ├── GarminBadgesView.mc                  # Main page: UI rendering (programmatic via dc.draw*) + HTTP fetch + 3-section selection state
 │   ├── GarminBadgesDelegate.mc              # Input for the main page (see "Navigation & selection")
-│   ├── GarminBadgesAllUpcomingView.mc       # "Next Badges" page: today's just-started + next upcoming badges (up to 10), scrollable
+│   ├── GarminBadgesAllUpcomingView.mc       # "Next Badges" page: already-joined upcoming badges (up to 10), scrollable
 │   ├── GarminBadgesAllUpcomingDelegate.mc   # Input for the "Next Upcoming" page (see "Navigation & selection")
 │   ├── GarminBadgesAllEndingSoonView.mc     # "Ending Soon" page: all challenges ending within 7 days, scrollable
 │   ├── GarminBadgesAllEndingSoonDelegate.mc # Input for the "Ending Soon" page (see "Navigation & selection")
@@ -72,7 +72,7 @@ Until the app is published, sideloaded builds can't show a Settings screen in Ga
 
   > Track your [garminbadges.com](https://garminbadges.com) challenge progress right from your wrist.
   >
-  > - NEXT BADGES gives you a heads-up on badges starting within 7 days — and flags any that started in the last 24 hours and still need joining, highlighted in red so they don't slip by.
+  > - NEXT BADGES gives you a heads-up on your already-joined badges starting within 7 days.
   > - ENDING SOON surfaces your in-progress challenges that wrap up within a week, soonest first, each with an ahead/behind-schedule indicator.
   > - CHALLENGES lists your most urgent in-progress challenges, ranked by how far ahead or behind schedule you are, each with a live progress bar (e.g. 7/10 km).
   > - Select or tap any row for full details: progress, percentage, schedule status, and duration.
@@ -154,7 +154,7 @@ Response shape:
 
 `challenges` is up to 20 in-progress, time-limited badges (earned_date IS NULL, with both `start_date` and `end_date` set). They're sorted with started badges (`start_date <= now`) first — ranked descending by "days behind schedule", `days_behind` = `(elapsed_fraction - progress_fraction) * total_days` of the challenge window — followed by badges whose `start_date` is still in the future, last. `started` is `start_date <= now`; for not-yet-started badges, `days_until_start` is `ceil(hours until start_date / 24)` (`0` for already-started badges). `days_until_end` is `ceil(hours until end_date / 24)`, signed: positive = ends in the future, `0` = ends today, negative = overdue.
 
-`upcoming` is up to 10 badges, composed of two groups: first, badges whose `start_date` was within the last 24 hours and that the user hasn't joined yet (no `user_badges` row) — these get `days_until: 0` ("Today"), so a badge doesn't silently disappear from the response the moment it starts before the user joins it; then, badges with `start_date` in the next 7 days (not yet started), sorted by `start_date` ascending. Either array may be empty.
+`upcoming` is up to 10 badges with `start_date` in the next 7 days that the user has already joined (has a `user_badges` row) — unjoined badges aren't actionable from this list, so they're excluded entirely. Sorted by `start_date` ascending. May be empty.
 
 `duration_days` is the challenge window length (`end_date - start_date`, in days). For `upcoming` badges with no `end_date`, it's `0`. The view filters out any item whose `duration_days` exceeds the `MaxDurationDays` setting (`0` = no limit) via `filterByDuration()` in `onReceive()`.
 
@@ -166,7 +166,7 @@ Some challenges (e.g. "finish in the top 3" podium challenges) have no numeric t
 
 The main page has three sections, each hidden entirely when its item list is empty:
 
-- **NEXT BADGES** — up to 3 `upcoming` badges (centered rows, name + `formatDaysUntil(days_until)`). Rows where `days_until == 0` ("Today" — started within the last 24h, not yet joined) are drawn in red via `BadgeFormat.drawUpcomingRow()` so they stand out from the "starts in Nd" rows.
+- **NEXT BADGES** — up to 3 `upcoming` badges (centered rows, name + `formatDaysUntil(days_until)`). `BadgeFormat.drawUpcomingRow()` still highlights a `days_until == 0` row in red, but since `upcoming` only contains already-joined badges with a future `start_date`, this case is effectively unreachable in practice.
 - **ENDING SOON** — up to 3 `challenges` whose `days_until_end <= 7` (including overdue), sorted soonest-ending first via `GarminBadgesView.computeEndingSoon()`. Compact rows: name + "Ends Nd"/"Ends today" on the left, the `days_behind` indicator on the right.
 - **CHALLENGES** — up to 5 `challenges` (existing most-behind-first sort). Compact rows: name + the `days_behind` indicator only, no progress bar.
 
@@ -218,7 +218,7 @@ All three extend `ScrollableView`/`ScrollDelegate` and share the same scroll/cli
 `GarminBadgesGlanceView` (registered via `GarminBadgesApp.getGlanceView()`) is the small preview shown in the watch's widget glance loop. It makes its own `/api/watch` request (same auth/fetch pattern as the main view) and shows:
 
 - **Line 1** — the title of the most urgent badge "to do", in priority order:
-  1. `upcoming[0].name` if `upcoming` is non-empty — a badge that's active today (started within the last 24h, not yet joined) or starting within 7 days. "Today"/"Nd" (`days_until`) is appended to the title.
+  1. `upcoming[0].name` if `upcoming` is non-empty — an already-joined badge starting within 7 days. "Nd" (`days_until`) is appended to the title.
   2. Otherwise, the `challenges` entry with the soonest `days_until_end` (`<= 7`, via `findEndingSoon()`), with "Ends Nd"/"Ends today" (`BadgeFormat.formatEndsIn()`) appended.
   3. Otherwise, the most urgent `challenges[0]` (already sorted most-behind-first by the API), with "Today"/"Nd" (`days_until_start`) appended if `started` is `false`.
   4. Otherwise, "No challenges".

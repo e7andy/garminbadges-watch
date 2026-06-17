@@ -273,9 +273,9 @@ module BadgeFormat {
         var dueVal  = (due != null) ? due as Lang.Number : 0;
         var dueText = formatDaysUntil(dueVal);
 
-        // Badges that started within the last 24h and aren't yet joined come
-        // back as "Today" (days_until == 0) — highlight them in red so they
-        // stand out from the "starts in Nd" rows.
+        // days_until == 0 ("Today") is highlighted in red, though in
+        // practice unreachable since upcoming badges always have a future
+        // start_date.
         var isToday  = (dueVal == 0);
         var textColor = isToday ? RED : Graphics.COLOR_WHITE;
         var dueColor  = isToday ? RED : GRAY;

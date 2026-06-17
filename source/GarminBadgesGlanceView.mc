@@ -141,8 +141,7 @@ class GarminBadgesGlanceView extends WatchUi.GlanceView {
             }
         }
 
-        // Priority: the next badge to do — active today (started within the
-        // last 24h, not yet joined) or starting within 7 days
+        // Priority: the next already-joined badge starting within 7 days
         // (upcoming[0]); otherwise the most urgent challenge ending within 7
         // days; otherwise the most urgent challenge overall (challenges are
         // already sorted most-behind-first by the API).

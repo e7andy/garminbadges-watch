@@ -2,10 +2,9 @@ import Toybox.Graphics;
 import Toybox.Lang;
 import Toybox.WatchUi;
 
-// "Next Badges" page — badges that started within the last 24h and aren't
-// yet joined ("Today", highlighted), followed by the next (up to 10 total)
-// badges starting within 7 days, sorted soonest-first. Reached by
-// selecting/tapping the NEXT BADGES section on the main page.
+// "Next Badges" page — up to 10 already-joined badges starting within the
+// next 7 days, sorted soonest-first. Reached by selecting/tapping the NEXT
+// BADGES section on the main page.
 class GarminBadgesAllUpcomingView extends ScrollableView {
 
     private var _upcoming as Lang.Array<Lang.Dictionary>;
