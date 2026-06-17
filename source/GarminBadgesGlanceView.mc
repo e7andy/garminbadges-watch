@@ -289,11 +289,31 @@ class GarminBadgesGlanceView extends WatchUi.GlanceView {
             }
         }
 
-        // Line 2: number of challenges ending soon and number behind schedule
-        var summaryY    = (h * 0.78).toNumber();
-        var summaryText = _endingSoon.toString() + " ending · " + _behind.toString() + " behind";
+        // Line 2: number of challenges ending soon and number behind
+        // schedule, each part grayed out when its count is zero
+        var summaryY = (h * 0.78).toNumber();
+
+        var endingPart    = _endingSoon.toString() + " ending";
+        var separatorPart = " · ";
+        var behindPart    = _behind.toString() + " behind";
+
+        var endingWidth    = dc.getTextWidthInPixels(endingPart, font);
+        var separatorWidth = dc.getTextWidthInPixels(separatorPart, font);
+        var behindWidth    = dc.getTextWidthInPixels(behindPart, font);
+        var totalWidth     = endingWidth + separatorWidth + behindWidth;
+
+        var leftJustify = Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER;
+        var x = (w - totalWidth) / 2;
+
+        dc.setColor((_endingSoon > 0) ? BadgeFormat.RED : BadgeFormat.GRAY, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(x, summaryY, font, endingPart, leftJustify);
+        x += endingWidth;
+
+        dc.setColor(BadgeFormat.GRAY, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(x, summaryY, font, separatorPart, leftJustify);
+        x += separatorWidth;
 
         dc.setColor((_behind > 0) ? BadgeFormat.RED : BadgeFormat.GRAY, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(w / 2, summaryY, font, summaryText, justify);
+        dc.drawText(x, summaryY, font, behindPart, leftJustify);
     }
 }
