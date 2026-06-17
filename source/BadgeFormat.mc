@@ -136,6 +136,16 @@ module BadgeFormat {
         return defaultVal;
     }
 
+    // The garminbadges.com detail-page URL for a badge dict, or null if it
+    // has no "id" (e.g. stale cached data from before this field existed).
+    function badgeUrl(badge as Lang.Dictionary) as Lang.String? {
+        var id = badge.get("id");
+        if (id == null) {
+            return null;
+        }
+        return "https://garminbadges.com/badges/" + (id as Lang.Number).toString();
+    }
+
     // FONT_SYSTEM_TINY if the device's "Text Size" setting is scaled up
     // (DeviceSettings.fontScale, API 5.0.1+), otherwise FONT_SYSTEM_XTINY.
     // Devices without fontScale always get FONT_SYSTEM_XTINY.

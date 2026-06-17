@@ -26,6 +26,8 @@ garminbadges-watch/
 │   ├── GarminBadgesAllChallengesDelegate.mc # Input for the "All Challenges" page (see "Navigation & selection")
 │   ├── GarminBadgesChallengeDetailView.mc   # Detail page for a single challenge (progress, status, duration)
 │   ├── GarminBadgesUpcomingDetailView.mc    # Detail page for an upcoming badge (starts-in, duration)
+│   ├── GarminBadgesDetailDelegate.mc        # Input for both detail pages: MENU/tap-icon opens the "View Online" menu
+│   ├── GarminBadgesDetailMenuDelegate.mc    # Handles the detail pages' "View Online" menu selection
 │   ├── GarminBadgesMenuDelegate.mc          # Options menu (Refresh)
 │   ├── GarminBadgesGlanceView.mc            # Glance widget preview: title + progress bar + "behind" count
 │   ├── ScrollableView.mc                    # Shared scroll/momentum/page-flip-ticker state for the scrollable pages
@@ -144,10 +146,10 @@ Response shape:
 ```json
 {
   "challenges": [
-    { "name": "Challenge Name", "progress_value": 7000, "target_value": 10000, "unit_key": "mi_km", "days_behind": 2, "duration_days": 30, "started": true, "days_until_start": 0, "days_until_end": 5 }
+    { "id": 42, "name": "Challenge Name", "progress_value": 7000, "target_value": 10000, "unit_key": "mi_km", "days_behind": 2, "duration_days": 30, "started": true, "days_until_start": 0, "days_until_end": 5 }
   ],
   "upcoming": [
-    { "name": "New Challenge", "days_until": 3, "duration_days": 7 }
+    { "id": 99, "name": "New Challenge", "days_until": 3, "duration_days": 7 }
   ]
 }
 ```
@@ -161,6 +163,8 @@ Response shape:
 May be empty.
 
 `duration_days` is the challenge window length (`end_date - start_date`, in days). For `upcoming` badges with no `end_date`, it's `0`. The view filters out any item whose `duration_days` exceeds the `MaxDurationDays` setting (`0` = no limit) via `filterByDuration()` in `onReceive()`.
+
+`id` is the badge's numeric primary key, used to build a `https://garminbadges.com/badges/{id}` link via `BadgeFormat.badgeUrl()` (see "Detail pages" below). Stale `BadgeCache` data from before this field existed won't have it — `badgeUrl()` returns `null` in that case, and the "View Online" menu item still shows but no-ops when selected, rather than the menu failing to open at all.
 
 Some challenges (e.g. "finish in the top 3" podium challenges) have no numeric target — `target_value` is `0` and `unit_key` is `null` for these. The view skips the progress bar/fraction and shows "No target" instead.
 
@@ -210,12 +214,15 @@ All three extend `ScrollableView`/`ScrollDelegate` and share the same scroll/cli
 
 ## Detail pages
 
-`GarminBadgesChallengeDetailView` and `GarminBadgesUpcomingDetailView` are pushed via `ScrollableView.showChallengeDetail()`/`showUpcomingDetail()` with a plain `WatchUi.BehaviorDelegate()` (BACK pops back). Both:
+`GarminBadgesChallengeDetailView` and `GarminBadgesUpcomingDetailView` are pushed via `ScrollableView.showChallengeDetail()`/`showUpcomingDetail()` with `GarminBadgesDetailDelegate` (BACK pops back; MENU button, tapping the menu icon, or holding START/STOP per the platform's default `BehaviorDelegate.onMenu()` dispatch all open a `Menu2` with a single "View Online" item — `GarminBadgesDetailMenuDelegate.onSelect()` pops the menu and opens the badge's `https://garminbadges.com/badges/{id}` page on the phone via `Communications.openWebPage()`, or no-ops if `BadgeFormat.badgeUrl()` returned `null`. `onMenu()` always builds the menu regardless, since returning `false` would let the event fall through to the previously pushed view's delegate — e.g. the main page's "Refresh" menu — which is more confusing than a "View Online" item that no-ops until refreshed). Both:
 
 - Wrap the badge name across multiple lines with `BadgeFormat.wrapText()`, sized to `BadgeFormat.textMaxWidth(w, h, y)` (the chord width at `y` on round/semi-round screens, so wrapped lines don't run under the bezel).
 - Space lines using `dc.getFontHeight(font)` plus a `textGap` (`h * 0.02`), not fixed `h * 0.0X` fractions, so wrapped names and the lines below them don't crowd together.
+- Draw `BadgeFormat.drawMenuIcon()` in the top-right corner, same as the main page, marking the menu as available.
 
 `GarminBadgesChallengeDetailView` additionally shows a progress bar + percentage + fraction (or "No target"), then a status line ("Nd behind/ahead of schedule", "On track", or "Starts Nd" if `started` is `false`), then the duration line. `GarminBadgesUpcomingDetailView` shows "Starts Today"/"Starts Nd" and the duration line.
+
+`Communications.openWebPage(url, params, options)` asks Garmin Connect Mobile to push a phone notification; if the user accepts, the URL opens in the phone's default browser. It only needs the `Communications` permission (already declared in `manifest.xml` for HTTP) and requires an active Bluetooth connection to the phone — there's no completion callback in this API, so the watch can't detect success/failure.
 
 ## Glance
 

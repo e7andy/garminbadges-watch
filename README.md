@@ -17,7 +17,7 @@ Data is fetched live from the GarminBadges API using your account's API key, and
 ## Navigation
 
 - **UP/DOWN** move the highlighted section between Next Badges, Ending Soon, and Challenges (whichever are visible).
-- **SELECT** (or tap any row) opens a full list page for that row's section — "Next Badges", "Ending Soon", or "All Challenges" — showing more detail (progress bars, fractions) and letting you scroll with UP/DOWN or drag/flick. From there, SELECT/tap a row opens its detail page (full progress, schedule status, duration). BACK returns to the previous page.
+- **SELECT** (or tap any row) opens a full list page for that row's section — "Next Badges", "Ending Soon", or "All Challenges" — showing more detail (progress bars, fractions) and letting you scroll with UP/DOWN or drag/flick. From there, SELECT/tap a row opens its detail page (full progress, schedule status, duration). On a detail page, **MENU** (or tap the menu icon, or hold START/STOP) opens a menu with "View Online", which opens that badge's page on garminbadges.com in your phone's browser. BACK returns to the previous page.
 - **MENU** (or hold START/STOP, or tap the menu icon in the top-right corner) opens an options menu to refresh the data.
 
 ## Setup
@@ -98,6 +98,8 @@ garminbadges-watch/
 │   ├── GarminBadgesAllChallengesDelegate.mc # "All Challenges" page input (SELECT/tap = open detail page, UP/DOWN/drag/flick = scroll, BACK = pop)
 │   ├── GarminBadgesChallengeDetailView.mc   # Detail page for a single challenge
 │   ├── GarminBadgesUpcomingDetailView.mc    # Detail page for an upcoming badge
+│   ├── GarminBadgesDetailDelegate.mc        # Detail page input (MENU = open "View Online" menu, BACK = pop)
+│   ├── GarminBadgesDetailMenuDelegate.mc    # Handles the detail pages' "View Online" menu selection
 │   ├── GarminBadgesMenuDelegate.mc          # Options menu (Refresh)
 │   ├── GarminBadgesGlanceView.mc            # Glance preview: title + progress bar + behind count
 │   ├── ScrollableView.mc                    # Shared scroll/momentum/ticker state

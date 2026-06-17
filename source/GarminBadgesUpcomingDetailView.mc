@@ -3,8 +3,8 @@ import Toybox.Lang;
 import Toybox.WatchUi;
 
 // Detail page for an upcoming badge — pushed when an "UPCOMING" row is
-// selected on the main page. BACK pops back (default BehaviorDelegate
-// behavior).
+// selected on the main page. MENU (or tap the menu icon) opens the badge
+// on garminbadges.com (GarminBadgesDetailDelegate); BACK pops back.
 class GarminBadgesUpcomingDetailView extends WatchUi.View {
 
     private var _badge as Lang.Dictionary;
@@ -65,5 +65,7 @@ class GarminBadgesUpcomingDetailView extends WatchUi.View {
             dc.drawText(cx, durationY, Graphics.FONT_XTINY,
                 "Duration: " + durationVal.toString() + "d", justify);
         }
+
+        BadgeFormat.drawMenuIcon(dc, w, h);
     }
 }

@@ -3,8 +3,9 @@ import Toybox.Lang;
 import Toybox.WatchUi;
 
 // Detail page for a single challenge — pushed when a row is selected on
-// the main or all-challenges pages. BACK pops back (default
-// BehaviorDelegate behavior).
+// the main or all-challenges pages. MENU (or tap the menu icon)
+// opens the badge on garminbadges.com (GarminBadgesDetailDelegate); BACK
+// pops back.
 class GarminBadgesChallengeDetailView extends WatchUi.View {
 
     private var _badge as Lang.Dictionary;
@@ -135,5 +136,7 @@ class GarminBadgesChallengeDetailView extends WatchUi.View {
             dc.drawText(cx, durationY, Graphics.FONT_XTINY,
                 "Duration: " + durationVal.toString() + "d", justify);
         }
+
+        BadgeFormat.drawMenuIcon(dc, w, h);
     }
 }

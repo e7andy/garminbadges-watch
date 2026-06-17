@@ -80,14 +80,14 @@ class ScrollableView extends WatchUi.View {
     // Pushes the detail page for the given challenge.
     function showChallengeDetail(badge as Lang.Dictionary) as Void {
         var view     = new GarminBadgesChallengeDetailView(badge);
-        var delegate = new WatchUi.BehaviorDelegate();
+        var delegate = new GarminBadgesDetailDelegate(BadgeFormat.badgeUrl(badge));
         WatchUi.pushView(view, delegate, WatchUi.SLIDE_LEFT);
     }
 
     // Pushes the detail page for the given upcoming badge.
     function showUpcomingDetail(badge as Lang.Dictionary) as Void {
         var view     = new GarminBadgesUpcomingDetailView(badge);
-        var delegate = new WatchUi.BehaviorDelegate();
+        var delegate = new GarminBadgesDetailDelegate(BadgeFormat.badgeUrl(badge));
         WatchUi.pushView(view, delegate, WatchUi.SLIDE_LEFT);
     }
 
