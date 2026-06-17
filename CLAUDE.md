@@ -154,7 +154,11 @@ Response shape:
 
 `challenges` is up to 20 in-progress, time-limited badges (earned_date IS NULL, with both `start_date` and `end_date` set). They're sorted with started badges (`start_date <= now`) first — ranked descending by "days behind schedule", `days_behind` = `(elapsed_fraction - progress_fraction) * total_days` of the challenge window — followed by badges whose `start_date` is still in the future, last. `started` is `start_date <= now`; for not-yet-started badges, `days_until_start` is `ceil(hours until start_date / 24)` (`0` for already-started badges). `days_until_end` is `ceil(hours until end_date / 24)`, signed: positive = ends in the future, `0` = ends today, negative = overdue.
 
-`upcoming` is up to 10 badges with `start_date` in the next 7 days, regardless of join status — this is the heads-up to join before the badge starts. Badges that have already started without being joined are not included (they're not "upcoming" anymore). Sorted by `start_date` ascending. May be empty.
+`upcoming` is up to 10 badges, sorted by `start_date` ascending, drawn from two groups depending on the badge's category (`badge_categories.key == 'challenges'`, i.e. progress-tracked badges vs. plain one-off badges):
+- **Challenges-category** badges starting within the next 7 days, but only if the user has already joined (has a `user_badges` row) — these need to be joined to track progress, so an unjoined one isn't actionable here; it'll show up once joined and in progress.
+- **Plain (non-Challenges)** badges starting within the next 7 days, or that started within the last 24 hours ("active today"), regardless of join status — these are one-off badges with no progress tracking, so there's nothing to "join" ahead of time in the same sense.
+
+May be empty.
 
 `duration_days` is the challenge window length (`end_date - start_date`, in days). For `upcoming` badges with no `end_date`, it's `0`. The view filters out any item whose `duration_days` exceeds the `MaxDurationDays` setting (`0` = no limit) via `filterByDuration()` in `onReceive()`.
 
@@ -166,7 +170,7 @@ Some challenges (e.g. "finish in the top 3" podium challenges) have no numeric t
 
 The main page has three sections, each hidden entirely when its item list is empty:
 
-- **NEXT BADGES** — up to 3 `upcoming` badges (centered rows, name + `formatDaysUntil(days_until)`). `BadgeFormat.drawUpcomingRow()` still highlights a `days_until == 0` row in red, but since `upcoming` only contains badges with a future `start_date`, this case is effectively unreachable in practice.
+- **NEXT BADGES** — up to 3 `upcoming` badges (centered rows, name + `formatDaysUntil(days_until)`). `BadgeFormat.drawUpcomingRow()` highlights `days_until == 0` rows in red — plain (non-Challenges-category) badges that started within the last 24 hours ("active today").
 - **ENDING SOON** — up to 3 `challenges` whose `days_until_end <= 7` (including overdue), sorted soonest-ending first via `GarminBadgesView.computeEndingSoon()`. Compact rows: name + "Ends Nd"/"Ends today" on the left, the `days_behind` indicator on the right.
 - **CHALLENGES** — up to 5 `challenges` (existing most-behind-first sort). Compact rows: name + the `days_behind` indicator only, no progress bar.
 
