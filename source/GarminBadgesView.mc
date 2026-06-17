@@ -106,10 +106,13 @@ class GarminBadgesView extends ScrollableView {
 
     // Applies a /api/watch response (fresh or cached) to the view state.
     private function applyData(d as Lang.Dictionary) as Void {
-        var maxDuration = Application.Properties.getValue("MaxDurationDays") as Lang.Number?;
-        if (maxDuration == null) {
-            maxDuration = 0;
+        var maxDurationRaw = null;
+        try {
+            maxDurationRaw = Application.Properties.getValue("MaxDurationDays");
+        } catch (e) {
+            maxDurationRaw = null;
         }
+        var maxDuration = (maxDurationRaw instanceof Lang.Number) ? maxDurationRaw : 0;
 
         var ch = d.get("challenges");
         if (ch instanceof Lang.Array) {
