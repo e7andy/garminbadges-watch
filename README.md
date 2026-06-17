@@ -6,7 +6,7 @@ A Garmin Connect IQ watch app that shows your [GarminBadges](https://garminbadge
 
 The main page has up to three sections, each hidden when it has nothing to show:
 
-- **Next Badges** — up to 3 already-joined badges starting within the next 7 days, with a "Nd" countdown.
+- **Next Badges** — up to 3 badges starting within the next 7 days, with a "Nd" countdown.
 - **Ending Soon** — up to 3 in-progress challenges ending within the next 7 days (including overdue ones), soonest first, each showing "Ends Nd"/"Ends today" plus a days-ahead/behind indicator.
 - **Challenges** — your most urgent in-progress challenges (up to 5), ranked by how many days behind schedule you are, each with a days-ahead/behind indicator.
 
@@ -90,7 +90,7 @@ garminbadges-watch/
 │   ├── GarminBadgesApp.mc                   # Entry point (AppBase)
 │   ├── GarminBadgesView.mc                  # Main page: UI rendering + API fetch + 3-section selection state
 │   ├── GarminBadgesDelegate.mc              # Main page input (SELECT/tap = open that section's list page, UP/DOWN = move section selection, MENU/hold START = options menu)
-│   ├── GarminBadgesAllUpcomingView.mc       # "Next Badges" page: already-joined upcoming badges (up to 10)
+│   ├── GarminBadgesAllUpcomingView.mc       # "Next Badges" page: next upcoming badges (up to 10)
 │   ├── GarminBadgesAllUpcomingDelegate.mc   # "Next Badges" page input (SELECT/tap = open detail page, UP/DOWN/drag/flick = scroll, BACK = pop)
 │   ├── GarminBadgesAllEndingSoonView.mc     # "Ending Soon" page: all challenges ending within 7 days
 │   ├── GarminBadgesAllEndingSoonDelegate.mc # "Ending Soon" page input (SELECT/tap = open detail page, UP/DOWN/drag/flick = scroll, BACK = pop)
