@@ -184,7 +184,7 @@ module BadgeFormat {
     }
 
     // progressVal/targetVal are in the badge's raw storage units (meters for
-    // mi_km, seconds for seconds) and formatted per-unit for display.
+    // mi_km/ft_m/yd_m, seconds for seconds) and formatted per-unit for display.
     function formatFraction(progressVal as Lang.Float, targetVal as Lang.Float, unitStr as Lang.String) as Lang.String {
         if (unitStr.equals("mi_km")) {
             var statute = (System.getDeviceSettings().distanceUnits == System.UNIT_STATUTE);
@@ -197,6 +197,13 @@ module BadgeFormat {
             var statute = (System.getDeviceSettings().distanceUnits == System.UNIT_STATUTE);
             var factor  = statute ? 3.28084 : 1.0;
             var label   = statute ? "ft" : "m";
+            return formatNum(progressVal * factor) + "/" + formatNum(targetVal * factor) + " " + label;
+        }
+
+        if (unitStr.equals("yd_m")) {
+            var statute = (System.getDeviceSettings().distanceUnits == System.UNIT_STATUTE);
+            var factor  = statute ? 1.09361 : 1.0;
+            var label   = statute ? "yd" : "m";
             return formatNum(progressVal * factor) + "/" + formatNum(targetVal * factor) + " " + label;
         }
 

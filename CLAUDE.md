@@ -246,6 +246,7 @@ Selecting/tapping the glance uses the default `GlanceViewDelegate` behavior (no 
 
 - **`mi_km`** — raw value is meters. Shown as km by default; converted to miles if `System.getDeviceSettings().distanceUnits == System.UNIT_STATUTE`.
 - **`ft_m`** — raw value is meters. Shown as m by default; converted to feet if `System.getDeviceSettings().distanceUnits == System.UNIT_STATUTE`.
+- **`yd_m`** — raw value is meters. Shown as m by default; converted to yards if `System.getDeviceSettings().distanceUnits == System.UNIT_STATUTE`.
 - **`seconds`** — whole hours show as `Nh`; otherwise `hh:mm:ss`.
 - **`kilocalories`** — shown as `value/target kcal`.
 - All other units — `value/target unit_key`.
