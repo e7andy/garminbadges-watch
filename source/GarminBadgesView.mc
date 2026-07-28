@@ -138,14 +138,15 @@ class GarminBadgesView extends ScrollableView {
         _error   = "";
     }
 
-    // Challenges ending within 7 days (including overdue), sorted soonest
-    // first. May overlap with _challenges (a challenge can appear in both the
-    // CHALLENGES and ENDING SOON sections).
+    // Started challenges ending within 7 days (including overdue), sorted
+    // soonest first. May overlap with _challenges (a challenge can appear in
+    // both the CHALLENGES and ENDING SOON sections). Not-yet-started
+    // challenges are excluded even if their end date falls within 7 days.
     private function computeEndingSoon(challenges as Lang.Array<Lang.Dictionary>) as Lang.Array<Lang.Dictionary> {
         var result = [] as Lang.Array<Lang.Dictionary>;
         for (var i = 0; i < challenges.size(); i += 1) {
             var badge = challenges[i] as Lang.Dictionary;
-            if (daysUntilEndOf(badge) <= 7) {
+            if (startedOf(badge) && daysUntilEndOf(badge) <= 7) {
                 result.add(badge);
             }
         }
@@ -168,6 +169,13 @@ class GarminBadgesView extends ScrollableView {
     private function daysUntilEndOf(badge as Lang.Dictionary) as Lang.Number {
         var due = badge.get("days_until_end");
         return (due != null) ? due as Lang.Number : 999;
+    }
+
+    // Missing/null "started" (e.g. stale cache from before the field
+    // existed) defaults to true.
+    private function startedOf(badge as Lang.Dictionary) as Lang.Boolean {
+        var started = badge.get("started");
+        return (started == null) || (started as Lang.Boolean);
     }
 
     function onUpdate(dc as Graphics.Dc) as Void {

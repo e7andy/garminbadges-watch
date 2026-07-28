@@ -20,7 +20,7 @@ garminbadges-watch/
 │   ├── GarminBadgesDelegate.mc              # Input for the main page (see "Navigation & selection")
 │   ├── GarminBadgesAllUpcomingView.mc       # "Next Badges" page: next upcoming badges (up to 10), scrollable
 │   ├── GarminBadgesAllUpcomingDelegate.mc   # Input for the "Next Upcoming" page (see "Navigation & selection")
-│   ├── GarminBadgesAllEndingSoonView.mc     # "Ending Soon" page: all challenges ending within 7 days, scrollable
+│   ├── GarminBadgesAllEndingSoonView.mc     # "Ending Soon" page: all started challenges ending within 7 days, scrollable
 │   ├── GarminBadgesAllEndingSoonDelegate.mc # Input for the "Ending Soon" page (see "Navigation & selection")
 │   ├── GarminBadgesAllChallengesView.mc     # "All Challenges" page: all challenges sorted most-urgent first, scrollable
 │   ├── GarminBadgesAllChallengesDelegate.mc # Input for the "All Challenges" page (see "Navigation & selection")
@@ -175,7 +175,7 @@ Some challenges (e.g. "finish in the top 3" podium challenges) have no numeric t
 The main page has three sections, each hidden entirely when its item list is empty:
 
 - **NEXT BADGES** — up to 3 `upcoming` badges (centered rows, name + `formatDaysUntil(days_until)`). `BadgeFormat.drawUpcomingRow()` highlights `days_until == 0` rows in red — plain (non-Challenges-category) badges that started within the last 24 hours ("active today").
-- **ENDING SOON** — up to 3 `challenges` whose `days_until_end <= 7` (including overdue), sorted soonest-ending first via `GarminBadgesView.computeEndingSoon()`. Compact rows: name + "Ends Nd"/"Ends today" on the left, the `days_behind` indicator on the right.
+- **ENDING SOON** — up to 3 started `challenges` (`started == true`) whose `days_until_end <= 7` (including overdue), sorted soonest-ending first via `GarminBadgesView.computeEndingSoon()`. Not-yet-started challenges are excluded even if their end date falls within 7 days — e.g. a 3-day challenge starting Friday and ending Sunday only appears here from Friday. Compact rows: name + "Ends Nd"/"Ends today" on the left, the `days_behind` indicator on the right.
 - **CHALLENGES** — up to 5 `challenges` (existing most-behind-first sort). Compact rows: name + the `days_behind` indicator only, no progress bar.
 
 Each compact row's `days_behind` indicator is "+Nd"/"-Nd"/"0d" (red/green/gray).
@@ -207,7 +207,7 @@ Input dispatch:
 Each main-page section has a corresponding full list page, pushed via `WatchUi.pushView(view, delegate, WatchUi.SLIDE_LEFT)` from `GarminBadgesView.showAllUpcoming()`/`showAllEndingSoon()`/`showAllChallenges()`:
 
 - **`GarminBadgesAllUpcomingView`** ("NEXT BADGES") — lists all of `_upcoming` (up to 10, the API's full `upcoming` array), using the same centered single-line row format as the main page's NEXT BADGES rows (name + `formatDaysUntil(days_until)`, paged, with `days_until == 0` rows highlighted in red). Title is "NEXT BADGES" rather than "ALL UPCOMING" since the list isn't exhaustive — just the next 10. Uses its own `ALL_ROW_HEIGHT_FRAC = 0.12` row height. `upcomingAt(y)` maps a tap to an upcoming badge; SELECT/tap pushes `GarminBadgesUpcomingDetailView` via `showUpcomingDetail()`.
-- **`GarminBadgesAllEndingSoonView`** ("ENDING SOON") — lists all of `_endingSoon` (every challenge with `days_until_end <= 7`, already sorted soonest-first), using full `BadgeFormat.drawChallengeRow()` rows (progress bar + fraction) at the inherited `ROW_HEIGHT_FRAC = 0.255`. `challengeAt(y)` maps a tap to a challenge; SELECT/tap pushes `GarminBadgesChallengeDetailView` via `showChallengeDetail()`.
+- **`GarminBadgesAllEndingSoonView`** ("ENDING SOON") — lists all of `_endingSoon` (every started challenge with `days_until_end <= 7`, already sorted soonest-first), using full `BadgeFormat.drawChallengeRow()` rows (progress bar + fraction) at the inherited `ROW_HEIGHT_FRAC = 0.255`. `challengeAt(y)` maps a tap to a challenge; SELECT/tap pushes `GarminBadgesChallengeDetailView` via `showChallengeDetail()`.
 - **`GarminBadgesAllChallengesView`** ("ALL CHALLENGES") — lists all of `_challenges` (up to 20, the API's full `challenges` array, most-urgent-first), using the same full-row layout as Ending Soon. `challengeAt(y)`/`showChallengeDetail()` as above.
 
 All three extend `ScrollableView`/`ScrollDelegate` and share the same scroll/clip/selection-highlight/scroll-indicator structure: title + divider at the top, a clipped+scrollable viewport below, `drawSelectionTint()`/`drawSelectionMarker()` on the row at `viewportTop()`, and `BadgeFormat.drawScrollIndicator()`. Each shows its own empty-state message ("Nothing\nupcoming", "Nothing ending\nsoon", "No challenges\nin progress") when its list is empty.
@@ -230,7 +230,7 @@ All three extend `ScrollableView`/`ScrollDelegate` and share the same scroll/cli
 
 - **Line 1** — the title of the most urgent badge "to do", in priority order:
   1. `upcoming[0].name` if `upcoming` is non-empty — a badge starting within 7 days. "Nd" (`days_until`) is appended to the title.
-  2. Otherwise, the `challenges` entry with the soonest `days_until_end` (`<= 7`, via `findEndingSoon()`), with "Ends Nd"/"Ends today" (`BadgeFormat.formatEndsIn()`) appended.
+  2. Otherwise, the started `challenges` entry with the soonest `days_until_end` (`<= 7`, via `findEndingSoon()`), with "Ends Nd"/"Ends today" (`BadgeFormat.formatEndsIn()`) appended.
   3. Otherwise, the most urgent `challenges[0]` (already sorted most-behind-first by the API), with "Today"/"Nd" (`days_until_start`) appended if `started` is `false`.
   4. Otherwise, "No challenges".
 

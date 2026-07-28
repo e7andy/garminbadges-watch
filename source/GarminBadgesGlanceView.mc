@@ -136,7 +136,7 @@ class GarminBadgesGlanceView extends WatchUi.GlanceView {
                 _behind += 1;
             }
 
-            if (daysUntilEndOf(c) <= 7) {
+            if (startedOf(c) && daysUntilEndOf(c) <= 7) {
                 _endingSoon += 1;
             }
         }
@@ -164,9 +164,7 @@ class GarminBadgesGlanceView extends WatchUi.GlanceView {
                 var c = challenges[0] as Lang.Dictionary;
 
                 var suffix = "";
-                var started = c.get("started");
-                var startedVal = (started == null) || (started as Lang.Boolean);
-                if (!startedVal) {
+                if (!startedOf(c)) {
                     var daysUntilStart = c.get("days_until_start");
                     var daysUntilStartVal = (daysUntilStart != null) ? daysUntilStart as Lang.Number : 0;
                     suffix = " " + BadgeFormat.formatDaysUntil(daysUntilStartVal);
@@ -191,15 +189,22 @@ class GarminBadgesGlanceView extends WatchUi.GlanceView {
         return (due != null) ? due as Lang.Number : 999;
     }
 
-    // The challenge with the soonest days_until_end (<= 7), or null if none
-    // qualify.
+    // Missing/null "started" (e.g. stale cache from before the field
+    // existed) defaults to true.
+    private function startedOf(badge as Lang.Dictionary) as Lang.Boolean {
+        var started = badge.get("started");
+        return (started == null) || (started as Lang.Boolean);
+    }
+
+    // The started challenge with the soonest days_until_end (<= 7), or null
+    // if none qualify.
     private function findEndingSoon(challenges as Lang.Array<Lang.Dictionary>) as Lang.Dictionary? {
         var best = null;
         var bestDue = 999;
         for (var i = 0; i < challenges.size(); i += 1) {
             var c = challenges[i] as Lang.Dictionary;
             var due = daysUntilEndOf(c);
-            if (due <= 7 && due < bestDue) {
+            if (startedOf(c) && due <= 7 && due < bestDue) {
                 bestDue = due;
                 best = c;
             }
