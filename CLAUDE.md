@@ -111,6 +111,8 @@ These are uploaded directly via the developer portal — they are not part of th
 
 Set `ApiKey` in the simulator via **File → Edit Persistent Storage → Edit Application.Properties data**. The app shows an error message until a key is provided.
 
+**"No settings file found for this app" in the simulator**: the standalone `monkeydo.bat` CLI above only pushes the `.prg` to the simulator's virtual device filesystem — it does not forward the sibling `bin/BadgeTracker-settings.json`, so Edit Persistent Storage (and any Settings screen) can't find a settings schema and errors out. The VS Code Monkey C extension's own launch path (F5 / Run and Debug, `.vscode/launch.json`'s "Run App (fenix7)" config) goes through a different debug-adapter bridge that does locate and push the `-settings.json` alongside the `.prg`. Use that instead of `monkeydo.bat` whenever you need to edit Application.Properties in the simulator.
+
 `MaxDurationDays` (numeric, 0-365, default 0) hides any challenge/upcoming badge whose `duration_days` exceeds it. `0` means no limit.
 
 Since the app defines a glance (`getGlanceView()`), the simulator opens directly to the glance preview rather than the main view. Press **Enter** (or click the screen) to invoke the default `GlanceViewDelegate` and launch the full app — this is also how it works on a real device. Pressing BACK from there exits the app in the simulator rather than returning to the glance; that's a simulator-only limitation (the glance↔app handoff is OS-managed on a real device).

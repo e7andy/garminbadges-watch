@@ -1,0 +1,12 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "monkeyc",
+            "request": "launch",
+            "name": "Run App (fenix7)",
+            "stopAtLaunch": false,
+            "device": "fenix7"
+        }
+    ]
+}
