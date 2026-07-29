@@ -146,15 +146,15 @@ module BadgeFormat {
         return "https://garminbadges.com/badges/" + (id as Lang.Number).toString();
     }
 
-    // FONT_SYSTEM_TINY if the device's "Text Size" setting is scaled up
-    // (DeviceSettings.fontScale, API 5.0.1+), otherwise FONT_SYSTEM_XTINY.
-    // Devices without fontScale always get FONT_SYSTEM_XTINY.
+    // FONT_SYSTEM_SMALL if the device's "Text Size" setting is scaled up
+    // (DeviceSettings.fontScale, API 5.0.1+), otherwise FONT_SYSTEM_TINY.
+    // Devices without fontScale always get FONT_SYSTEM_TINY.
     function glanceFont() as Graphics.FontDefinition {
         var settings = System.getDeviceSettings();
         if ((settings has :fontScale) && settings.fontScale != null && settings.fontScale > 1.0) {
-            return Graphics.FONT_SYSTEM_TINY;
+            return Graphics.FONT_SYSTEM_SMALL;
         }
-        return Graphics.FONT_SYSTEM_XTINY;
+        return Graphics.FONT_SYSTEM_TINY;
     }
 
     // "Today" if daysUntil <= 0, otherwise "Nd".
@@ -433,6 +433,23 @@ module BadgeFormat {
             var ly = y + i * gap;
             dc.drawLine(x, ly, x + size, ly);
         }
+    }
+
+    // Hourglass icon (two triangles pinched at the center), centered at
+    // (cx, cy), used in place of the word "ending" in the glance summary.
+    function drawHourglassIcon(dc as Graphics.Dc, cx as Lang.Number, cy as Lang.Number, size as Lang.Number, color as Lang.Number) as Void {
+        var half = size / 2;
+        dc.setColor(color, Graphics.COLOR_TRANSPARENT);
+        dc.fillPolygon([[cx - half, cy - half], [cx + half, cy - half], [cx, cy]]);
+        dc.fillPolygon([[cx - half, cy + half], [cx + half, cy + half], [cx, cy]]);
+    }
+
+    // Downward-pointing triangle, centered at (cx, cy), used in place of the
+    // word "behind" in the glance summary.
+    function drawDownArrowIcon(dc as Graphics.Dc, cx as Lang.Number, cy as Lang.Number, size as Lang.Number, color as Lang.Number) as Void {
+        var half = size / 2;
+        dc.setColor(color, Graphics.COLOR_TRANSPARENT);
+        dc.fillPolygon([[cx - half, cy - half], [cx + half, cy - half], [cx, cy + half]]);
     }
 
     // True if (x, y) falls within the menu icon's tap target, with extra

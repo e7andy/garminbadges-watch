@@ -112,16 +112,16 @@ class GarminBadgesChallengeDetailView extends WatchUi.View {
             contentTop = noTargetY + smallFontHeight + textGap;
         }
 
-        // Days behind/ahead schedule, or days until start
+        // Days behind/ahead, or days until start
         var statusText = "";
         if (!startedVal) {
             statusText = "Starts " + BadgeFormat.formatDaysUntil(daysUntilStartVal);
             dc.setColor(BadgeFormat.GRAY, Graphics.COLOR_TRANSPARENT);
         } else if (daysBehindVal >= 0.5) {
-            statusText = BadgeFormat.formatNum(daysBehindVal) + "d behind schedule";
+            statusText = BadgeFormat.formatNum(daysBehindVal) + "d behind";
             dc.setColor(BadgeFormat.RED, Graphics.COLOR_TRANSPARENT);
         } else if (daysBehindVal <= -0.5) {
-            statusText = BadgeFormat.formatNum(-daysBehindVal) + "d ahead of schedule";
+            statusText = BadgeFormat.formatNum(-daysBehindVal) + "d ahead";
             dc.setColor(BadgeFormat.GREEN, Graphics.COLOR_TRANSPARENT);
         } else {
             statusText = "On track";

@@ -224,7 +224,7 @@ All three extend `ScrollableView`/`ScrollDelegate` and share the same scroll/cli
 - Space lines using `dc.getFontHeight(font)` plus a `textGap` (`h * 0.02`), not fixed `h * 0.0X` fractions, so wrapped names and the lines below them don't crowd together.
 - Draw `BadgeFormat.drawMenuIcon()` in the top-right corner, same as the main page, marking the menu as available.
 
-`GarminBadgesChallengeDetailView` additionally shows a progress bar + percentage + fraction (or "No target"), then a status line ("Nd behind/ahead of schedule", "On track", or "Starts Nd" if `started` is `false`), then the duration line. `GarminBadgesUpcomingDetailView` shows "Starts Today"/"Starts Nd" and the duration line.
+`GarminBadgesChallengeDetailView` additionally shows a progress bar + percentage + fraction (or "No target"), then a status line ("Nd behind"/"Nd ahead", "On track", or "Starts Nd" if `started` is `false`), then the duration line. `GarminBadgesUpcomingDetailView` shows "Starts Today"/"Starts Nd" and the duration line.
 
 `Communications.openWebPage(url, params, options)` asks Garmin Connect Mobile to push a phone notification; if the user accepts, the URL opens in the phone's default browser. It only needs the `Communications` permission (already declared in `manifest.xml` for HTTP) and requires an active Bluetooth connection to the phone — there's no completion callback in this API, so the watch can't detect success/failure.
 
@@ -239,8 +239,8 @@ All three extend `ScrollableView`/`ScrollDelegate` and share the same scroll/cli
   4. Otherwise, "No challenges".
 
   If the text is wider than the glance, it's shown as a page-flip ticker via `BadgeFormat.pagedText()` (alternating whole-word chunks, `BadgeFormat.PAGE_DURATION_TICKS` ticks per page, driven by a 1Hz `Timer.Timer` started in `onShow()`/stopped in `onHide()`).
-- **Middle** — a progress bar for that same item, filled by `progress_value/target_value` (clamped 0–1) via the shared `applyChallenge()` helper. Fill color follows `days_behind` like the main page's offset indicator: green if ahead (`<= -0.5`), red if behind (`>= 0.5`), gray if on track. Empty if the item is an `upcoming` badge or has no numeric target (`target_value == 0`).
-- **Line 2** — count of `challenges` with `days_behind > 0`, shown as "`N` behind" (red if `N > 0`, gray otherwise).
+- **Middle** — a thin progress bar (`h * 0.10` tall) for that same item, filled by `progress_value/target_value` (clamped 0–1) via the shared `applyChallenge()` helper. Fill color follows `days_behind` like the main page's offset indicator: green if ahead (`<= -0.5`), red if behind (`>= 0.5`), gray if on track. Empty if the item is an `upcoming` badge or has no numeric target (`target_value == 0`).
+- **Line 2** — an hourglass icon + count of started `challenges` ending within 7 days (`_endingSoon`, same criteria as `computeEndingSoon()`), a " · " separator, then a down-arrow icon + count of `challenges` with `days_behind > 0` (`_behind`). `BadgeFormat.drawHourglassIcon()`/`drawDownArrowIcon()` draw each as two/one filled triangle(s) rather than text, since "ending"/"behind" don't fit alongside larger glance text. Each icon+count pair is red if its count is `> 0`, gray otherwise.
 
 Selecting/tapping the glance uses the default `GlanceViewDelegate` behavior (no custom delegate registered), which opens the app's `getInitialView()`.
 

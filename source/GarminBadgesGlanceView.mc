@@ -279,8 +279,8 @@ class GarminBadgesGlanceView extends WatchUi.GlanceView {
         // closest item is an upcoming badge or has no numeric target)
         var barLeft   = (w * 0.08).toNumber();
         var barWidth  = (w * 0.84).toNumber();
-        var barTop    = (h * 0.42).toNumber();
-        var barHeight = (h * 0.18).toNumber();
+        var barTop    = (h * 0.46).toNumber();
+        var barHeight = (h * 0.10).toNumber();
 
         dc.setColor(BadgeFormat.DIM, Graphics.COLOR_TRANSPARENT);
         dc.drawRectangle(barLeft, barTop, barWidth, barHeight);
@@ -293,31 +293,44 @@ class GarminBadgesGlanceView extends WatchUi.GlanceView {
             }
         }
 
-        // Line 2: number of challenges ending soon and number behind
-        // schedule, each part grayed out when its count is zero
+        // Line 2: number of challenges ending soon (hourglass icon) and
+        // number behind schedule (down-arrow icon), each grayed out when
+        // its count is zero
         var summaryY = (h * 0.78).toNumber();
 
-        var endingPart    = _endingSoon.toString() + " ending";
-        var separatorPart = " · ";
-        var behindPart    = _behind.toString() + " behind";
+        var iconSize = dc.getFontHeight(font) / 2;
+        var iconGap  = (w * 0.035).toNumber();
 
-        var endingWidth    = dc.getTextWidthInPixels(endingPart, font);
+        var endingNumStr   = _endingSoon.toString();
+        var separatorPart  = " · ";
+        var behindNumStr   = _behind.toString();
+
+        var endingNumWidth = dc.getTextWidthInPixels(endingNumStr, font);
         var separatorWidth = dc.getTextWidthInPixels(separatorPart, font);
-        var behindWidth    = dc.getTextWidthInPixels(behindPart, font);
-        var totalWidth     = endingWidth + separatorWidth + behindWidth;
+        var behindNumWidth = dc.getTextWidthInPixels(behindNumStr, font);
+        var totalWidth     = iconSize + iconGap + endingNumWidth + separatorWidth +
+                              iconSize + iconGap + behindNumWidth;
 
         var leftJustify = Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER;
         var x = (w - totalWidth) / 2;
 
-        dc.setColor((_endingSoon > 0) ? BadgeFormat.RED : BadgeFormat.GRAY, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(x, summaryY, font, endingPart, leftJustify);
-        x += endingWidth;
+        var endingColor = (_endingSoon > 0) ? BadgeFormat.RED : BadgeFormat.GRAY;
+        BadgeFormat.drawHourglassIcon(dc, x + iconSize / 2, summaryY, iconSize, endingColor);
+        x += iconSize + iconGap;
+
+        dc.setColor(endingColor, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(x, summaryY, font, endingNumStr, leftJustify);
+        x += endingNumWidth;
 
         dc.setColor(BadgeFormat.GRAY, Graphics.COLOR_TRANSPARENT);
         dc.drawText(x, summaryY, font, separatorPart, leftJustify);
         x += separatorWidth;
 
-        dc.setColor((_behind > 0) ? BadgeFormat.RED : BadgeFormat.GRAY, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(x, summaryY, font, behindPart, leftJustify);
+        var behindColor = (_behind > 0) ? BadgeFormat.RED : BadgeFormat.GRAY;
+        BadgeFormat.drawDownArrowIcon(dc, x + iconSize / 2, summaryY, iconSize, behindColor);
+        x += iconSize + iconGap;
+
+        dc.setColor(behindColor, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(x, summaryY, font, behindNumStr, leftJustify);
     }
 }
