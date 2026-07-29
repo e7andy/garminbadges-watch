@@ -1,0 +1,11 @@
+{
+    "folders": [
+        {
+            "path": ".",
+            "name": "BadgeTracker"
+        }
+    ],
+    "settings": {
+        "monkeyC.jungleFiles": "jungle.xml"
+    }
+}

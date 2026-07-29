@@ -62,6 +62,8 @@ The app will show "Open Garmin Connect app to set API key" until you set the `Ap
 
 Since the app defines a glance (`getGlanceView()`), the simulator opens directly to the glance preview. Press **Enter** (or click the screen) to launch the full app, the same way selecting the glance does on a real device.
 
+**Editing settings in the simulator requires the VS Code launch path, not `monkeydo.bat`.** The standalone `monkeydo.bat` CLI above only pushes the `.prg` — it doesn't forward a settings schema, so Edit Persistent Storage fails with "No settings file found for this app." Instead, open the project via **`BadgeTracker.code-workspace`** (not a plain folder open) and run it from VS Code's Run and Debug panel ("Run App (fenix7)", F5) — see "Simulator" in `CLAUDE.md` for why the workspace file is required.
+
 ### Run on a real device
 
 1. Build the `.prg` as above (it's signed with your developer key, so it's ready to sideload).
