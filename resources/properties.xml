@@ -8,7 +8,7 @@
 
   <strings>
     <string id="AppName">Badge Tracker</string>
-    <string id="ApiKeyTitle">API Key</string>
+    <string id="ApiKeyTitle">API Key (from https://garminbadges.com/dashboard)</string>
     <string id="ApiUrlTitle">API URL</string>
     <string id="MaxDurationDaysTitle">Max Duration (days, 0 = no limit)</string>
   </strings>
