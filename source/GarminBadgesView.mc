@@ -3,6 +3,7 @@ import Toybox.Communications;
 import Toybox.Graphics;
 import Toybox.Lang;
 import Toybox.PersistedContent;
+import Toybox.System;
 import Toybox.WatchUi;
 
 class GarminBadgesView extends ScrollableView {
@@ -266,6 +267,7 @@ class GarminBadgesView extends ScrollableView {
     // title should start).
     private function drawUpcomingSection(dc as Graphics.Dc, w as Lang.Number, h as Lang.Number, startY as Lang.Float, count as Lang.Number) as Lang.Float {
         var sectionIdx = _sectionIds.size();
+        var marked     = (sectionIdx == _selectedSectionIdx);
 
         BadgeFormat.drawSectionTitle(dc, w, h, startY, "NEXT BADGES");
         BadgeFormat.drawSectionDivider(dc, w, h, startY + TITLE_TO_DIVIDER_FRAC);
@@ -275,15 +277,32 @@ class GarminBadgesView extends ScrollableView {
         var rowsTopPx    = (h * rowsTopFrac).toNumber();
         var rowsBottomPx = rowsTopPx + count * rowHeightPx;
 
-        if (sectionIdx == _selectedSectionIdx) {
+        if (marked) {
             BadgeFormat.drawSelectionTint(dc, rowsTopPx, rowsBottomPx - rowsTopPx, w);
             BadgeFormat.drawSelectionMarker(dc, rowsTopPx, rowsBottomPx - rowsTopPx, w);
         }
 
+        // All rows in the marked section scroll in lockstep — measure each
+        // row's own scroll duration up front and share the longest one so a
+        // shorter row holds at its revealed position until the slowest row
+        // (and thus the whole group) finishes before looping together.
+        var groupScrollMs = 0;
+        if (marked) {
+            for (var i = 0; i < count; i += 1) {
+                var rowY = rowsTopPx + i * rowHeightPx + rowHeightPx / 2;
+                var layout = BadgeFormat.upcomingRowLayout(dc, _upcoming[i] as Lang.Dictionary, w, h, rowY);
+                var ms = BadgeFormat.scrollDurationMs(dc, layout[0] as Lang.String, BadgeFormat.glanceFont(), layout[2] as Lang.Number);
+                if (ms > groupScrollMs) {
+                    groupScrollMs = ms;
+                }
+            }
+        }
+
+        var nowMs = System.getTimer();
         for (var i = 0; i < count; i += 1) {
             var badge = _upcoming[i] as Lang.Dictionary;
             var rowY  = rowsTopPx + i * rowHeightPx + rowHeightPx / 2;
-            BadgeFormat.drawUpcomingRow(dc, badge, rowY, w, h, _tickCount);
+            BadgeFormat.drawUpcomingRow(dc, badge, rowY, w, h, null, null, marked, nowMs, groupScrollMs);
         }
 
         _sectionIds.add(BadgeFormat.SECTION_UPCOMING);
@@ -298,6 +317,7 @@ class GarminBadgesView extends ScrollableView {
     // y just below it.
     private function drawCompactSection(dc as Graphics.Dc, w as Lang.Number, h as Lang.Number, startY as Lang.Float, title as Lang.String, items as Lang.Array<Lang.Dictionary>, count as Lang.Number, sectionId as Lang.Number, showEndsIn as Lang.Boolean) as Lang.Float {
         var sectionIdx = _sectionIds.size();
+        var marked     = (sectionIdx == _selectedSectionIdx);
 
         BadgeFormat.drawSectionTitle(dc, w, h, startY, title);
         BadgeFormat.drawSectionDivider(dc, w, h, startY + TITLE_TO_DIVIDER_FRAC);
@@ -306,12 +326,30 @@ class GarminBadgesView extends ScrollableView {
         var rowHeightPx  = (h * MAIN_ROW_HEIGHT_FRAC).toNumber();
         var rowsTopPx    = (h * rowsTopFrac).toNumber();
         var rowsBottomPx = rowsTopPx + count * rowHeightPx;
+        var barLeft      = (w * 0.12).toNumber();
+        var barRight     = (w * 0.88).toNumber();
 
-        if (sectionIdx == _selectedSectionIdx) {
+        if (marked) {
             BadgeFormat.drawSelectionTint(dc, rowsTopPx, rowsBottomPx - rowsTopPx, w);
             BadgeFormat.drawSelectionMarker(dc, rowsTopPx, rowsBottomPx - rowsTopPx, w);
         }
 
+        // All rows in the marked section scroll in lockstep — see
+        // drawUpcomingSection().
+        var groupScrollMs = 0;
+        if (marked) {
+            for (var i = 0; i < count; i += 1) {
+                var badge  = items[i] as Lang.Dictionary;
+                var suffix = showEndsIn ? " " + BadgeFormat.formatEndsIn(daysUntilEndOf(badge)) : "";
+                var parts  = BadgeFormat.nameLineTextAndWidth(dc, badge, barLeft, barRight, w, suffix);
+                var ms     = BadgeFormat.scrollDurationMs(dc, parts[0] as Lang.String, BadgeFormat.glanceFont(), parts[1] as Lang.Number);
+                if (ms > groupScrollMs) {
+                    groupScrollMs = ms;
+                }
+            }
+        }
+
+        var nowMs = System.getTimer();
         for (var i = 0; i < count; i += 1) {
             var badge  = items[i] as Lang.Dictionary;
             var rowTop = rowsTopPx + i * rowHeightPx;
@@ -321,7 +359,7 @@ class GarminBadgesView extends ScrollableView {
                 suffix = " " + BadgeFormat.formatEndsIn(daysUntilEndOf(badge));
             }
 
-            BadgeFormat.drawCompactRow(dc, badge, rowTop, rowHeightPx, w, _tickCount, suffix);
+            BadgeFormat.drawCompactRow(dc, badge, rowTop, rowHeightPx, w, suffix, null, null, marked, nowMs, groupScrollMs);
         }
 
         _sectionIds.add(sectionId);

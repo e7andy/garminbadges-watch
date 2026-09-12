@@ -3,6 +3,7 @@ import Toybox.Communications;
 import Toybox.Graphics;
 import Toybox.Lang;
 import Toybox.PersistedContent;
+import Toybox.System;
 import Toybox.Timer;
 import Toybox.WatchUi;
 
@@ -17,6 +18,16 @@ import Toybox.WatchUi;
 (:glance)
 class GarminBadgesGlanceView extends WatchUi.GlanceView {
 
+    // Title scroll phase (timing/speed shared via BadgeFormat.SCROLL_*).
+    // Driven by elapsed wall-clock time (System.getTimer()) rather than a
+    // tick count, so the scroll position is correct for whenever a redraw
+    // actually lands even if the device throttles/coalesces glance redraws
+    // below BadgeFormat.SCROLL_TICK_MS (not every device supports fast
+    // "live update" glance redraws).
+    private const SCROLL_PHASE_PAUSE_START = 0;
+    private const SCROLL_PHASE_SCROLLING   = 1;
+    private const SCROLL_PHASE_PAUSE_END   = 2;
+
     private var _loading   as Lang.Boolean = true;
     private var _hasData   as Lang.Boolean = false;
     private var _error     as Lang.String  = "";
@@ -27,8 +38,14 @@ class GarminBadgesGlanceView extends WatchUi.GlanceView {
     private var _ratio     as Lang.Float   = 0.0;
     private var _barColor  as Lang.Number  = BadgeFormat.RED;
 
-    private var _tickCount as Lang.Number = 0;
     private var _timer     as Timer.Timer?;
+
+    // Scroll state for the title line, keyed off the title text so a
+    // refresh that changes the title restarts the scroll cleanly.
+    private var _scrollText as Lang.String = "";
+    private var _scrollPhase as Lang.Number = SCROLL_PHASE_PAUSE_START;
+    private var _scrollPhaseStartMs as Lang.Number = 0;
+    private var _scrollX as Lang.Float = 0.0;
 
     function initialize() {
         GlanceView.initialize();
@@ -47,9 +64,8 @@ class GarminBadgesGlanceView extends WatchUi.GlanceView {
         if (_timer != null) {
             _timer.stop();
         }
-        _tickCount = 0;
         _timer = new Timer.Timer();
-        _timer.start(method(:onTimer), BadgeFormat.TICKER_TICK_MS, true);
+        _timer.start(method(:onTimer), BadgeFormat.SCROLL_TICK_MS, true);
     }
 
     function onHide() as Void {
@@ -60,7 +76,6 @@ class GarminBadgesGlanceView extends WatchUi.GlanceView {
     }
 
     function onTimer() as Void {
-        _tickCount += 1;
         WatchUi.requestUpdate();
     }
 
@@ -266,12 +281,11 @@ class GarminBadgesGlanceView extends WatchUi.GlanceView {
             return;
         }
 
-        // Line 1: title, page-flip ticker (alternating chunks of whole
-        // words) if it doesn't fit
+        // Line 1: title, continuous marquee scroll if it doesn't fit
         var titleY = (h * 0.22).toNumber();
 
         dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(w / 2, titleY, font, BadgeFormat.pagedText(dc, _title, font, w, _tickCount), justify);
+        drawScrollingTitle(dc, _title, font, w, titleY);
 
         // Middle: progress bar for the closest challenge (empty if the
         // closest item is an upcoming badge or has no numeric target)
@@ -330,5 +344,65 @@ class GarminBadgesGlanceView extends WatchUi.GlanceView {
 
         dc.setColor(behindColor, Graphics.COLOR_TRANSPARENT);
         dc.drawText(x, summaryY, font, behindNumStr, leftJustify);
+    }
+
+    // Draws the title centered if it fits, otherwise as a continuously
+    // scrolling marquee: pause, scroll left just far enough to reveal the
+    // tail end once, hold there, then loop back to the start — it never
+    // scrolls the title fully away. Position is computed from elapsed
+    // wall-clock time (System.getTimer()) rather than ticks, so it's
+    // correctly paced regardless of how often the device actually redraws
+    // the glance.
+    private function drawScrollingTitle(dc as Graphics.Dc, text as Lang.String, font as Graphics.FontDefinition, w as Lang.Number, y as Lang.Number) as Void {
+        var textWidth = dc.getTextWidthInPixels(text, font);
+
+        if (textWidth <= w) {
+            _scrollText = "";
+            dc.drawText(w / 2, y, font, text,
+                Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+            return;
+        }
+
+        var distance = textWidth - w;
+        var now      = System.getTimer();
+
+        if (!text.equals(_scrollText)) {
+            _scrollText         = text;
+            _scrollPhase        = SCROLL_PHASE_PAUSE_START;
+            _scrollPhaseStartMs = now;
+            _scrollX            = 0.0;
+        }
+
+        var elapsed = now - _scrollPhaseStartMs;
+        if (elapsed < 0) {
+            // System.getTimer() wrapped around; restart this phase cleanly.
+            _scrollPhaseStartMs = now;
+            elapsed = 0;
+        }
+
+        if (_scrollPhase == SCROLL_PHASE_PAUSE_START) {
+            _scrollX = 0.0;
+            if (elapsed >= BadgeFormat.SCROLL_PAUSE_START_MS) {
+                _scrollPhase        = SCROLL_PHASE_SCROLLING;
+                _scrollPhaseStartMs = now;
+            }
+        } else if (_scrollPhase == SCROLL_PHASE_SCROLLING) {
+            _scrollX = 0.0 - (elapsed.toFloat() / 1000.0) * BadgeFormat.SCROLL_SPEED_PX_PER_SEC;
+            if (_scrollX <= -distance) {
+                _scrollX            = -distance.toFloat();
+                _scrollPhase        = SCROLL_PHASE_PAUSE_END;
+                _scrollPhaseStartMs = now;
+            }
+        } else {
+            // SCROLL_PHASE_PAUSE_END: holding at the fully-revealed position.
+            if (elapsed >= BadgeFormat.SCROLL_PAUSE_END_MS) {
+                _scrollPhase        = SCROLL_PHASE_PAUSE_START;
+                _scrollPhaseStartMs = now;
+                _scrollX            = 0.0;
+            }
+        }
+
+        dc.drawText(_scrollX.toNumber(), y, font, text,
+            Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
     }
 }

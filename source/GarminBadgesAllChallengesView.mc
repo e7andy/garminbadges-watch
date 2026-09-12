@@ -1,5 +1,6 @@
 import Toybox.Graphics;
 import Toybox.Lang;
+import Toybox.System;
 import Toybox.WatchUi;
 
 // "All Challenges" page — all in-progress, time-limited challenges, sorted
@@ -70,6 +71,7 @@ class GarminBadgesAllChallengesView extends ScrollableView {
         }
 
         var selectedIdx = rowIndexAt(viewportTop);
+        var nowMs       = System.getTimer();
 
         dc.setClip(0, viewportTop, w, viewportHeight);
 
@@ -81,12 +83,13 @@ class GarminBadgesAllChallengesView extends ScrollableView {
                 continue;
             }
 
-            if (i == selectedIdx) {
+            var marked = (i == selectedIdx);
+            if (marked) {
                 BadgeFormat.drawSelectionTint(dc, rowTop, rowHeightPx, w);
                 BadgeFormat.drawSelectionMarker(dc, rowTop, rowHeightPx, w);
             }
 
-            BadgeFormat.drawChallengeRow(dc, _challenges[i] as Lang.Dictionary, rowTop, w, h, justify, _tickCount);
+            BadgeFormat.drawChallengeRow(dc, _challenges[i] as Lang.Dictionary, rowTop, w, h, justify, viewportTop, viewportHeight, marked, nowMs);
         }
 
         dc.clearClip();

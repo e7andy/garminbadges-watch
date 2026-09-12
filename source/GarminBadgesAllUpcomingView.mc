@@ -1,5 +1,6 @@
 import Toybox.Graphics;
 import Toybox.Lang;
+import Toybox.System;
 import Toybox.WatchUi;
 
 // "Next Badges" page — up to 10 badges starting within the next 7 days,
@@ -73,6 +74,7 @@ class GarminBadgesAllUpcomingView extends ScrollableView {
         }
 
         var selectedIdx = rowIndexAt(viewportTop);
+        var nowMs       = System.getTimer();
 
         dc.setClip(0, viewportTop, w, viewportHeight);
 
@@ -84,14 +86,15 @@ class GarminBadgesAllUpcomingView extends ScrollableView {
                 continue;
             }
 
-            if (i == selectedIdx) {
+            var marked = (i == selectedIdx);
+            if (marked) {
                 BadgeFormat.drawSelectionTint(dc, rowTop, rowHeightPx, w);
                 BadgeFormat.drawSelectionMarker(dc, rowTop, rowHeightPx, w);
             }
 
             var badge = _upcoming[i] as Lang.Dictionary;
             var rowY  = rowTop + rowHeightPx / 2;
-            BadgeFormat.drawUpcomingRow(dc, badge, rowY, w, h, _tickCount);
+            BadgeFormat.drawUpcomingRow(dc, badge, rowY, w, h, viewportTop, viewportHeight, marked, nowMs, 0);
         }
 
         dc.clearClip();
