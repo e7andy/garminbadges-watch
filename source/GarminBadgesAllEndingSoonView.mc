@@ -30,7 +30,7 @@ class GarminBadgesAllEndingSoonView extends ScrollableView {
         // Title
         dc.setColor(BadgeFormat.RED, Graphics.COLOR_TRANSPARENT);
         dc.drawText(cx, (h * 0.08 + 0.5).toNumber(), BadgeFormat.glanceFont(),
-            "ENDING SOON", justify);
+            "DUE SOON", justify);
 
         // Divider
         dc.setColor(BadgeFormat.DIM, Graphics.COLOR_TRANSPARENT);

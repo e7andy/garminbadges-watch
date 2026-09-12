@@ -75,7 +75,7 @@ Until the app is published, sideloaded builds can't show a Settings screen in Ga
   > Track your [garminbadges.com](https://garminbadges.com) challenge progress right from your wrist.
   >
   > - NEXT BADGES gives you a heads-up on badges starting within 7 days.
-  > - ENDING SOON surfaces your in-progress challenges that wrap up within a week, soonest first, each with an ahead/behind-schedule indicator.
+  > - DUE SOON surfaces your in-progress challenges that wrap up within a week, soonest first, each with an ahead/behind-schedule indicator.
   > - CHALLENGES lists your most urgent in-progress challenges, ranked by how far ahead or behind schedule you are, each with a live progress bar (e.g. 7/10 km).
   > - Select or tap any row for full details: progress, percentage, schedule status, and duration.
   > - A glance widget on your watch face loop shows your next badge or most urgent challenge with a progress bar, plus how many challenges are ending soon and how many you're behind on.
@@ -95,7 +95,7 @@ These are uploaded directly via the developer portal — they are not part of th
 - **Hero/banner image** (optional, promotional) — 1440x720px.
 - **Screenshots** — each ≤500x500px and ≤150KB, captured from the simulator (`connectiq.bat` + `monkeydo.bat`, then Win+Shift+S to capture and crop/resize). Cover the app's main views, on at least one round device (most of `manifest.xml`'s targets are round):
   - Glance preview
-  - Main page (UPCOMING / ENDING SOON / CHALLENGES sections)
+  - Main page (UPCOMING / DUE SOON / CHALLENGES sections)
   - An "All <Section>" page (e.g. All Challenges)
   - A detail page (challenge or upcoming)
 
@@ -178,7 +178,7 @@ Some challenges (e.g. "finish in the top 3" podium challenges) have no numeric t
 
 The main page has three sections, each hidden entirely when its item list is empty:
 
-- **ENDING SOON** — up to 3 started `challenges` (`started == true`) whose `days_until_end <= 7` (including overdue), sorted soonest-ending first via `GarminBadgesView.computeEndingSoon()`. Not-yet-started challenges are excluded even if their end date falls within 7 days — e.g. a 3-day challenge starting Friday and ending Sunday only appears here from Friday. Compact rows: name + "Ends Nd"/"Ends today" on the left, the `days_behind` indicator on the right.
+- **DUE SOON** — up to 3 started `challenges` (`started == true`) whose `days_until_end <= 7` (including overdue), sorted soonest-ending first via `GarminBadgesView.computeEndingSoon()`. Not-yet-started challenges are excluded even if their end date falls within 7 days — e.g. a 3-day challenge starting Friday and ending Sunday only appears here from Friday. Compact rows: name + "Ends Nd"/"Ends today" on the left, the `days_behind` indicator on the right.
 - **NEXT BADGES** — up to 3 `upcoming` badges (centered rows, name + `formatDaysUntil(days_until)`). `BadgeFormat.drawUpcomingRow()` highlights `days_until == 0` rows in red — plain (non-Challenges-category) badges that started within the last 24 hours ("active today").
 - **CHALLENGES** — up to 5 `challenges` (existing most-behind-first sort). Compact rows: name + the `days_behind` indicator only, no progress bar.
 
@@ -186,7 +186,7 @@ Each compact row's `days_behind` indicator is "+Nd"/"-Nd"/"0d" (red/green/gray).
 
 ## Navigation & selection
 
-The main page (`GarminBadgesView`) has section-level UP/DOWN selection across its three sections (ENDING SOON / NEXT BADGES / CHALLENGES, in `BadgeFormat.SECTION_UPCOMING/SECTION_ENDING_SOON/SECTION_CHALLENGES`) — not individual rows:
+The main page (`GarminBadgesView`) has section-level UP/DOWN selection across its three sections (DUE SOON / NEXT BADGES / CHALLENGES, in `BadgeFormat.SECTION_UPCOMING/SECTION_ENDING_SOON/SECTION_CHALLENGES`) — not individual rows:
 
 - Each `onUpdate()` rebuilds `_sectionIds`/`_sectionTops`/`_sectionBottoms` (parallel arrays — visible section ids in display order, and the pixel y-bounds of each section's row block), skipping any section whose item list is empty.
 - `_selectedSectionIdx` indexes into `_sectionIds`. `GarminBadgesDelegate.onNextPage()`/`onPreviousPage()` (DOWN/UP) call `view.moveSelection(±1)`, which clamps `_selectedSectionIdx` to `[0, _sectionIds.size() - 1]`.
@@ -211,7 +211,7 @@ Input dispatch:
 Each main-page section has a corresponding full list page, pushed via `WatchUi.pushView(view, delegate, WatchUi.SLIDE_LEFT)` from `GarminBadgesView.showAllUpcoming()`/`showAllEndingSoon()`/`showAllChallenges()`:
 
 - **`GarminBadgesAllUpcomingView`** ("NEXT BADGES") — lists all of `_upcoming` (up to 10, the API's full `upcoming` array), using the same centered single-line row format as the main page's NEXT BADGES rows (name + `formatDaysUntil(days_until)`, paged, with `days_until == 0` rows highlighted in red). Title is "NEXT BADGES" rather than "ALL UPCOMING" since the list isn't exhaustive — just the next 10. Uses its own `ALL_ROW_HEIGHT_FRAC = 0.145` row height. `upcomingAt(y)` maps a tap to an upcoming badge; SELECT/tap pushes `GarminBadgesUpcomingDetailView` via `showUpcomingDetail()`.
-- **`GarminBadgesAllEndingSoonView`** ("ENDING SOON") — lists all of `_endingSoon` (every started challenge with `days_until_end <= 7`, already sorted soonest-first), using full `BadgeFormat.drawChallengeRow()` rows (progress bar + fraction) at the inherited `ROW_HEIGHT_FRAC = 0.28`. `challengeAt(y)` maps a tap to a challenge; SELECT/tap pushes `GarminBadgesChallengeDetailView` via `showChallengeDetail()`.
+- **`GarminBadgesAllEndingSoonView`** ("DUE SOON") — lists all of `_endingSoon` (every started challenge with `days_until_end <= 7`, already sorted soonest-first), using full `BadgeFormat.drawChallengeRow()` rows (progress bar + fraction) at the inherited `ROW_HEIGHT_FRAC = 0.28`. `challengeAt(y)` maps a tap to a challenge; SELECT/tap pushes `GarminBadgesChallengeDetailView` via `showChallengeDetail()`.
 - **`GarminBadgesAllChallengesView`** ("ALL CHALLENGES") — lists all of `_challenges` (up to 20, the API's full `challenges` array, most-urgent-first), using the same full-row layout as Ending Soon. `challengeAt(y)`/`showChallengeDetail()` as above.
 
 All three extend `ScrollableView`/`ScrollDelegate` and share the same scroll/clip/selection-highlight/scroll-indicator structure: title + divider at the top, a clipped+scrollable viewport below, `drawSelectionTint()`/`drawSelectionMarker()` on the row at `viewportTop()`, and `BadgeFormat.drawScrollIndicator()`. Each shows its own empty-state message ("Nothing\nupcoming", "Nothing ending\nsoon", "No challenges\nin progress") when its list is empty.
