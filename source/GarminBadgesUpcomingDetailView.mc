@@ -38,11 +38,11 @@ class GarminBadgesUpcomingDetailView extends WatchUi.View {
 
         // Title
         dc.setColor(BadgeFormat.RED, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, (h * 0.06 + 0.5).toNumber(), BadgeFormat.glanceFont(), "UPCOMING", justify);
+        dc.drawText(cx, (h * 0.08 + 0.5).toNumber(), BadgeFormat.glanceFont(), "UPCOMING", justify);
 
         // Name (wrapped, up to a few lines)
         var lineHeight = dc.getFontHeight(BadgeFormat.glanceFont());
-        var nameTop    = (h * 0.2).toNumber();
+        var nameTop    = (h * 0.24).toNumber();
         var nameLines  = BadgeFormat.wrapText(dc, nameStr, BadgeFormat.glanceFont(), BadgeFormat.textMaxWidth(w, h, nameTop));
         dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
         for (var i = 0; i < nameLines.size(); i += 1) {
