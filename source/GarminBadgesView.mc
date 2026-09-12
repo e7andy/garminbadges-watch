@@ -10,8 +10,8 @@ class GarminBadgesView extends ScrollableView {
     private const TOP_MARGIN_FRAC       = 0.05;
     private const TITLE_TO_DIVIDER_FRAC = 0.045;
     private const DIVIDER_TO_ROWS_FRAC  = 0.02;
-    private const SECTION_GAP_FRAC      = 0.035;
-    private const MAIN_ROW_HEIGHT_FRAC  = 0.07;
+    private const SECTION_GAP_FRAC      = 0.06;
+    private const MAIN_ROW_HEIGHT_FRAC  = 0.085;
 
     private var _loading    as Lang.Boolean = true;
     private var _hasData    as Lang.Boolean = false;
@@ -191,20 +191,20 @@ class GarminBadgesView extends ScrollableView {
         if (_refreshing) {
             var iconBounds = BadgeFormat.menuIconBounds(w, h);
             dc.setColor(BadgeFormat.GRAY, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(iconBounds[1], iconBounds[1] + iconBounds[2] / 2, Graphics.FONT_XTINY,
+            dc.drawText(iconBounds[1], iconBounds[1] + iconBounds[2] / 2, BadgeFormat.glanceFont(),
                 "Refreshing...", Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
         }
 
         if (_loading) {
             dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(cx, h / 2, Graphics.FONT_MEDIUM, "Loading...",
+            dc.drawText(cx, h / 2, BadgeFormat.glanceFont(), "Loading...",
                 Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
             return;
         }
 
         if (!_error.equals("")) {
             dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(cx, h / 2, Graphics.FONT_SMALL, _error,
+            dc.drawText(cx, h / 2, BadgeFormat.glanceFont(), _error,
                 Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
             return;
         }
@@ -228,7 +228,7 @@ class GarminBadgesView extends ScrollableView {
 
         if (upCount == 0 && endCount == 0 && chalCount == 0) {
             dc.setColor(BadgeFormat.GRAY, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(cx, h / 2, Graphics.FONT_SMALL, "No challenges\nin progress", justify);
+            dc.drawText(cx, h / 2, BadgeFormat.glanceFont(), "No challenges\nin progress", justify);
             return;
         }
 

@@ -29,7 +29,7 @@ class GarminBadgesAllChallengesView extends ScrollableView {
 
         // Title
         dc.setColor(BadgeFormat.RED, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, (h * 0.08 + 0.5).toNumber(), Graphics.FONT_XTINY,
+        dc.drawText(cx, (h * 0.08 + 0.5).toNumber(), BadgeFormat.glanceFont(),
             "ALL CHALLENGES", justify);
 
         // Divider
@@ -37,12 +37,12 @@ class GarminBadgesAllChallengesView extends ScrollableView {
         dc.drawLine((w * 0.15).toNumber(), (h * 0.16).toNumber(),
                     (w * 0.85).toNumber(), (h * 0.16).toNumber());
 
-        var viewportTop    = (h * 0.22).toNumber();
+        var viewportTop    = (h * 0.19).toNumber();
         var viewportHeight = h - viewportTop;
 
         if (_challenges.size() == 0) {
             dc.setColor(BadgeFormat.GRAY, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(cx, viewportTop + viewportHeight / 2, Graphics.FONT_SMALL,
+            dc.drawText(cx, viewportTop + viewportHeight / 2, BadgeFormat.glanceFont(),
                 "No challenges\nin progress", justify);
             return;
         }

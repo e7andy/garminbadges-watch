@@ -38,31 +38,30 @@ class GarminBadgesUpcomingDetailView extends WatchUi.View {
 
         // Title
         dc.setColor(BadgeFormat.RED, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, (h * 0.06 + 0.5).toNumber(), Graphics.FONT_XTINY, "UPCOMING", justify);
+        dc.drawText(cx, (h * 0.06 + 0.5).toNumber(), BadgeFormat.glanceFont(), "UPCOMING", justify);
 
         // Name (wrapped, up to a few lines)
-        var lineHeight = dc.getFontHeight(Graphics.FONT_SMALL);
+        var lineHeight = dc.getFontHeight(BadgeFormat.glanceFont());
         var nameTop    = (h * 0.2).toNumber();
-        var nameLines  = BadgeFormat.wrapText(dc, nameStr, Graphics.FONT_SMALL, BadgeFormat.textMaxWidth(w, h, nameTop));
+        var nameLines  = BadgeFormat.wrapText(dc, nameStr, BadgeFormat.glanceFont(), BadgeFormat.textMaxWidth(w, h, nameTop));
         dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
         for (var i = 0; i < nameLines.size(); i += 1) {
-            dc.drawText(cx, nameTop + i * lineHeight, Graphics.FONT_SMALL, nameLines[i] as Lang.String, justify);
+            dc.drawText(cx, nameTop + i * lineHeight, BadgeFormat.glanceFont(), nameLines[i] as Lang.String, justify);
         }
 
         var contentTop = nameTop + nameLines.size() * lineHeight + (h * 0.06).toNumber();
 
-        var smallFontHeight = dc.getFontHeight(Graphics.FONT_SMALL);
-        var xtinyFontHeight = dc.getFontHeight(Graphics.FONT_XTINY);
-        var textGap         = (h * 0.02).toNumber();
+        var fontHeight = dc.getFontHeight(BadgeFormat.glanceFont());
+        var textGap    = (h * 0.02).toNumber();
 
         // Starts in
         dc.setColor(BadgeFormat.GRAY, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, contentTop, Graphics.FONT_SMALL, "Starts " + BadgeFormat.formatDaysUntil(daysUntilVal), justify);
+        dc.drawText(cx, contentTop, BadgeFormat.glanceFont(), "Starts " + BadgeFormat.formatDaysUntil(daysUntilVal), justify);
 
         // Duration
         if (durationVal > 0) {
-            var durationY = contentTop + smallFontHeight / 2 + textGap + xtinyFontHeight / 2;
-            dc.drawText(cx, durationY, Graphics.FONT_XTINY,
+            var durationY = contentTop + fontHeight / 2 + textGap + fontHeight / 2;
+            dc.drawText(cx, durationY, BadgeFormat.glanceFont(),
                 "Duration: " + durationVal.toString() + "d", justify);
         }
 

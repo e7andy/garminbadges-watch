@@ -4,9 +4,9 @@
         {
             "type": "monkeyc",
             "request": "launch",
-            "name": "Run App (fenix7)",
+            "name": "Run App",
             "stopAtLaunch": false,
-            "device": "fenix7"
+            "device": "enduro3"
         }
     ]
 }

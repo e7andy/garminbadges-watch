@@ -50,22 +50,21 @@ class GarminBadgesChallengeDetailView extends WatchUi.View {
 
         // Title
         dc.setColor(BadgeFormat.RED, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, (h * 0.06 + 0.5).toNumber(), Graphics.FONT_XTINY, "CHALLENGE", justify);
+        dc.drawText(cx, (h * 0.06 + 0.5).toNumber(), BadgeFormat.glanceFont(), "CHALLENGE", justify);
 
         // Name (wrapped, up to a few lines)
-        var lineHeight = dc.getFontHeight(Graphics.FONT_SMALL);
+        var lineHeight = dc.getFontHeight(BadgeFormat.glanceFont());
         var nameTop    = (h * 0.16).toNumber();
-        var nameLines  = BadgeFormat.wrapText(dc, nameStr, Graphics.FONT_SMALL, BadgeFormat.textMaxWidth(w, h, nameTop));
+        var nameLines  = BadgeFormat.wrapText(dc, nameStr, BadgeFormat.glanceFont(), BadgeFormat.textMaxWidth(w, h, nameTop));
         dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
         for (var i = 0; i < nameLines.size(); i += 1) {
-            dc.drawText(cx, nameTop + i * lineHeight, Graphics.FONT_SMALL, nameLines[i] as Lang.String, justify);
+            dc.drawText(cx, nameTop + i * lineHeight, BadgeFormat.glanceFont(), nameLines[i] as Lang.String, justify);
         }
 
         var contentTop = nameTop + nameLines.size() * lineHeight + (h * 0.03).toNumber();
 
-        var smallFontHeight = dc.getFontHeight(Graphics.FONT_SMALL);
-        var xtinyFontHeight = dc.getFontHeight(Graphics.FONT_XTINY);
-        var textGap         = (h * 0.02).toNumber();
+        var fontHeight = dc.getFontHeight(BadgeFormat.glanceFont());
+        var textGap    = (h * 0.035).toNumber();
 
         var daysColor = BadgeFormat.GRAY;
         if (daysBehindVal >= 0.5) {
@@ -95,21 +94,21 @@ class GarminBadgesChallengeDetailView extends WatchUi.View {
 
             // Percentage
             dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(cx, barTop + barHeight / 2, Graphics.FONT_XTINY,
+            dc.drawText(cx, barTop + barHeight / 2, BadgeFormat.glanceFont(),
                 (ratio * 100).toNumber().toString() + "%", justify);
 
             // Fraction
-            var fractionY = barTop + barHeight + textGap + smallFontHeight / 2;
+            var fractionY = barTop + barHeight + textGap + fontHeight / 2;
             dc.setColor(BadgeFormat.GRAY, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(cx, fractionY, Graphics.FONT_SMALL,
+            dc.drawText(cx, fractionY, BadgeFormat.glanceFont(),
                 BadgeFormat.formatFraction(progressVal, targetVal, unitStr), justify);
 
-            contentTop = fractionY + smallFontHeight + textGap;
+            contentTop = fractionY + fontHeight + textGap;
         } else {
-            var noTargetY = contentTop + textGap + smallFontHeight / 2;
+            var noTargetY = contentTop + textGap + fontHeight / 2;
             dc.setColor(BadgeFormat.GRAY, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(cx, noTargetY, Graphics.FONT_SMALL, "No target", justify);
-            contentTop = noTargetY + smallFontHeight + textGap;
+            dc.drawText(cx, noTargetY, BadgeFormat.glanceFont(), "No target", justify);
+            contentTop = noTargetY + fontHeight + textGap;
         }
 
         // Days behind/ahead, or days until start
@@ -127,13 +126,13 @@ class GarminBadgesChallengeDetailView extends WatchUi.View {
             statusText = "On track";
             dc.setColor(BadgeFormat.GRAY, Graphics.COLOR_TRANSPARENT);
         }
-        dc.drawText(cx, contentTop, Graphics.FONT_SMALL, statusText, justify);
+        dc.drawText(cx, contentTop, BadgeFormat.glanceFont(), statusText, justify);
 
         // Duration
         if (durationVal > 0) {
-            var durationY = contentTop + smallFontHeight / 2 + textGap + xtinyFontHeight / 2;
+            var durationY = contentTop + fontHeight / 2 + textGap + fontHeight / 2;
             dc.setColor(BadgeFormat.GRAY, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(cx, durationY, Graphics.FONT_XTINY,
+            dc.drawText(cx, durationY, BadgeFormat.glanceFont(),
                 "Duration: " + durationVal.toString() + "d", justify);
         }
 

@@ -11,7 +11,7 @@ class ScrollableView extends WatchUi.View {
     protected var _viewportTop  as Lang.Number = 0;
     protected var _rowHeightPx  as Lang.Number = 0;
 
-    protected const ROW_HEIGHT_FRAC = 0.255;
+    protected const ROW_HEIGHT_FRAC = 0.28;
 
     private var _momentumVelocity as Lang.Float = 0.0;
     private var _momentumTimer    as Timer.Timer?;

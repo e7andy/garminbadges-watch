@@ -9,7 +9,7 @@ class GarminBadgesAllUpcomingView extends ScrollableView {
 
     private var _upcoming as Lang.Array<Lang.Dictionary>;
 
-    private const ALL_ROW_HEIGHT_FRAC = 0.12;
+    private const ALL_ROW_HEIGHT_FRAC = 0.145;
 
     function initialize(upcoming as Lang.Array<Lang.Dictionary>) {
         ScrollableView.initialize();
@@ -32,7 +32,7 @@ class GarminBadgesAllUpcomingView extends ScrollableView {
         // Title — "NEXT BADGES" rather than "ALL UPCOMING" since the API
         // caps this list at the next 10, not the full set.
         dc.setColor(BadgeFormat.RED, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, (h * 0.08 + 0.5).toNumber(), Graphics.FONT_XTINY,
+        dc.drawText(cx, (h * 0.08 + 0.5).toNumber(), BadgeFormat.glanceFont(),
             "NEXT BADGES", justify);
 
         // Divider
@@ -40,12 +40,12 @@ class GarminBadgesAllUpcomingView extends ScrollableView {
         dc.drawLine((w * 0.15).toNumber(), (h * 0.16).toNumber(),
                     (w * 0.85).toNumber(), (h * 0.16).toNumber());
 
-        var viewportTop    = (h * 0.22).toNumber();
+        var viewportTop    = (h * 0.19).toNumber();
         var viewportHeight = h - viewportTop;
 
         if (_upcoming.size() == 0) {
             dc.setColor(BadgeFormat.GRAY, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(cx, viewportTop + viewportHeight / 2, Graphics.FONT_SMALL,
+            dc.drawText(cx, viewportTop + viewportHeight / 2, BadgeFormat.glanceFont(),
                 "Nothing\nupcoming", justify);
             return;
         }

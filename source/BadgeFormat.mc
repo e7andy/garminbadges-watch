@@ -255,17 +255,17 @@ module BadgeFormat {
             daysColor = GREEN;
         }
         var daysText  = formatDaysOffset(daysBehindVal);
-        var daysWidth = dc.getTextWidthInPixels(daysText, Graphics.FONT_XTINY);
+        var daysWidth = dc.getTextWidthInPixels(daysText, glanceFont());
         dc.setColor(daysColor, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(barRight, lineY, Graphics.FONT_XTINY,
+        dc.drawText(barRight, lineY, glanceFont(),
             daysText, Graphics.TEXT_JUSTIFY_RIGHT | Graphics.TEXT_JUSTIFY_VCENTER);
 
         // Badge name + suffix (left) — page-flip ticker if too wide to fit
         // next to the days indicator
         var nameMaxWidth = barRight - barLeft - daysWidth - (w * 0.02).toNumber();
         dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(barLeft, lineY, Graphics.FONT_XTINY,
-            pagedText(dc, nameStr + nameSuffix, Graphics.FONT_XTINY, nameMaxWidth, tickCount), Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
+        dc.drawText(barLeft, lineY, glanceFont(),
+            pagedText(dc, nameStr + nameSuffix, glanceFont(), nameMaxWidth, tickCount), Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
 
         return daysColor;
     }
@@ -302,8 +302,8 @@ module BadgeFormat {
             var text     = nameStr + " " + dueText;
             var maxWidth = textMaxWidth(w, h, rowY);
             dc.setColor(textColor, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(w / 2, rowY, Graphics.FONT_XTINY,
-                pagedText(dc, text, Graphics.FONT_XTINY, maxWidth, tickCount),
+            dc.drawText(w / 2, rowY, glanceFont(),
+                pagedText(dc, text, glanceFont(), maxWidth, tickCount),
                 Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
             return;
         }
@@ -312,21 +312,21 @@ module BadgeFormat {
         var barRight = (w * 0.88).toNumber();
 
         dc.setColor(dueColor, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(barRight, rowY, Graphics.FONT_XTINY,
+        dc.drawText(barRight, rowY, glanceFont(),
             dueText, Graphics.TEXT_JUSTIFY_RIGHT | Graphics.TEXT_JUSTIFY_VCENTER);
 
-        var dueWidth     = dc.getTextWidthInPixels(dueText, Graphics.FONT_XTINY);
+        var dueWidth     = dc.getTextWidthInPixels(dueText, glanceFont());
         var nameMaxWidth = barRight - barLeft - dueWidth - (w * 0.02).toNumber();
         dc.setColor(textColor, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(barLeft, rowY, Graphics.FONT_XTINY,
-            pagedText(dc, nameStr, Graphics.FONT_XTINY, nameMaxWidth, tickCount),
+        dc.drawText(barLeft, rowY, glanceFont(),
+            pagedText(dc, nameStr, glanceFont(), nameMaxWidth, tickCount),
             Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
     }
 
     // Draws a section title (e.g. "UPCOMING") centered at fractional height y.
     function drawSectionTitle(dc as Graphics.Dc, w as Lang.Number, h as Lang.Number, y as Lang.Float, title as Lang.String) as Void {
         dc.setColor(RED, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(w / 2, (h * y + 0.5).toNumber(), Graphics.FONT_XTINY,
+        dc.drawText(w / 2, (h * y + 0.5).toNumber(), glanceFont(),
             title, Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
     }
 
@@ -383,13 +383,13 @@ module BadgeFormat {
 
             // Fraction text
             dc.setColor(GRAY, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(cx, (rowTop + h * 0.18 + 0.5).toNumber(), Graphics.FONT_XTINY,
+            dc.drawText(cx, (rowTop + h * 0.205 + 0.5).toNumber(), glanceFont(),
                 formatFraction(progressVal, targetVal, unitStr), justify);
         } else {
             // No numeric target (e.g. "finish in the top 3" challenges) — just
             // show the name/days row, no progress bar or fraction.
             dc.setColor(GRAY, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(cx, (rowTop + h * 0.18 + 0.5).toNumber(), Graphics.FONT_XTINY,
+            dc.drawText(cx, (rowTop + h * 0.18 + 0.5).toNumber(), glanceFont(),
                 "No target", justify);
         }
     }
