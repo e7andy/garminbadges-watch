@@ -233,8 +233,8 @@ All three extend `ScrollableView`/`ScrollDelegate` and share the same scroll/cli
 `GarminBadgesGlanceView` (registered via `GarminBadgesApp.getGlanceView()`) is the small preview shown in the watch's widget glance loop. It makes its own `/api/watch` request (same auth/fetch pattern as the main view) and shows:
 
 - **Line 1** — the title of the most urgent badge "to do", in priority order:
-  1. `upcoming[0].name` if `upcoming` is non-empty — a badge starting within 7 days. "Nd" (`days_until`) is appended to the title.
-  2. Otherwise, the started `challenges` entry with the soonest `days_until_end` (`<= 7`, via `findEndingSoon()`), with "Ends Nd"/"Ends today" (`BadgeFormat.formatEndsIn()`) appended.
+  1. The started `challenges` entry with the soonest `days_until_end` (`<= 7`, via `findEndingSoon()`), with "Ends Nd"/"Ends today" (`BadgeFormat.formatEndsIn()`) appended.
+  2. Otherwise, `upcoming[0].name` if `upcoming` is non-empty — a badge starting within 7 days. "Nd" (`days_until`) is appended to the title.
   3. Otherwise, the most urgent `challenges[0]` (already sorted most-behind-first by the API), with "Today"/"Nd" (`days_until_start`) appended if `started` is `false`.
   4. Otherwise, "No challenges".
 

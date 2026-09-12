@@ -141,11 +141,14 @@ class GarminBadgesGlanceView extends WatchUi.GlanceView {
             }
         }
 
-        // Priority: the next badge starting within 7 days
-        // (upcoming[0]); otherwise the most urgent challenge ending within 7
-        // days; otherwise the most urgent challenge overall (challenges are
-        // already sorted most-behind-first by the API).
-        if (upcoming.size() > 0) {
+        // Priority: the most urgent challenge ending within 7 days; otherwise
+        // the next badge starting within 7 days (upcoming[0]); otherwise the
+        // most urgent challenge overall (challenges are already sorted
+        // most-behind-first by the API).
+        var endingSoon = findEndingSoon(challenges);
+        if (endingSoon != null) {
+            applyChallenge(endingSoon, " " + BadgeFormat.formatEndsIn(daysUntilEndOf(endingSoon)));
+        } else if (upcoming.size() > 0) {
             var u = upcoming[0] as Lang.Dictionary;
             var name = u.get("name");
             var nameStr = (name != null) ? name as Lang.String : "";
@@ -156,26 +159,21 @@ class GarminBadgesGlanceView extends WatchUi.GlanceView {
             _title     = nameStr + " " + BadgeFormat.formatDaysUntil(daysUntilVal);
             _hasTarget = false;
             _ratio     = 0.0;
-        } else {
-            var endingSoon = findEndingSoon(challenges);
-            if (endingSoon != null) {
-                applyChallenge(endingSoon, " " + BadgeFormat.formatEndsIn(daysUntilEndOf(endingSoon)));
-            } else if (challenges.size() > 0) {
-                var c = challenges[0] as Lang.Dictionary;
+        } else if (challenges.size() > 0) {
+            var c = challenges[0] as Lang.Dictionary;
 
-                var suffix = "";
-                if (!startedOf(c)) {
-                    var daysUntilStart = c.get("days_until_start");
-                    var daysUntilStartVal = (daysUntilStart != null) ? daysUntilStart as Lang.Number : 0;
-                    suffix = " " + BadgeFormat.formatDaysUntil(daysUntilStartVal);
-                }
-
-                applyChallenge(c, suffix);
-            } else {
-                _title     = "No challenges";
-                _hasTarget = false;
-                _ratio     = 0.0;
+            var suffix = "";
+            if (!startedOf(c)) {
+                var daysUntilStart = c.get("days_until_start");
+                var daysUntilStartVal = (daysUntilStart != null) ? daysUntilStart as Lang.Number : 0;
+                suffix = " " + BadgeFormat.formatDaysUntil(daysUntilStartVal);
             }
+
+            applyChallenge(c, suffix);
+        } else {
+            _title     = "No challenges";
+            _hasTarget = false;
+            _ratio     = 0.0;
         }
 
         _hasData = true;
