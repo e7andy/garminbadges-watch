@@ -38,6 +38,36 @@ module BadgeFormat {
     const SCROLL_PAUSE_END_MS    = 500;
     const SCROLL_SPEED_PX_PER_SEC = 55.0;
 
+    // Bundles the parameters every scrolling-text draw call needs, since
+    // some older devices cap Monkey C functions at 9 parameters — passing
+    // marked/nowMs/groupScrollMs/clipTop/clipHeight individually through
+    // drawChallengeRow -> drawNameAndDaysLine -> drawScrollingText (etc.)
+    // blew past that limit.
+    //
+    // marked: gates whether text scrolls at all (see drawScrollingText).
+    // nowMs: a shared System.getTimer() value for every row drawn in one
+    // frame/group, so they stay in sync.
+    // groupScrollMs: > 0 makes sibling rows scroll in lockstep off the
+    // longest row's duration; <= 0 means solo/self-paced.
+    // clipTop/clipHeight: the (full-width) clip rectangle active on dc
+    // before drawing, to restore after a tighter scroll-band clip; null for
+    // both if no clip is active.
+    class ScrollCtx {
+        var marked as Lang.Boolean;
+        var nowMs as Lang.Number;
+        var groupScrollMs as Lang.Number;
+        var clipTop as Lang.Number?;
+        var clipHeight as Lang.Number?;
+
+        function initialize(marked as Lang.Boolean, nowMs as Lang.Number, groupScrollMs as Lang.Number, clipTop as Lang.Number?, clipHeight as Lang.Number?) {
+            self.marked        = marked;
+            self.nowMs         = nowMs;
+            self.groupScrollMs = groupScrollMs;
+            self.clipTop       = clipTop;
+            self.clipHeight    = clipHeight;
+        }
+    }
+
     // Splits text on spaces. Lang.String has no split() in this API.
     function splitWords(text as Lang.String) as Lang.Array<Lang.String> {
         var words     = [] as Lang.Array<Lang.String>;
@@ -131,25 +161,9 @@ module BadgeFormat {
     // there, then loops back to the start — it never scrolls the text
     // fully away.
     //
-    // marked gates whether it scrolls at all: unmarked text that's too wide
-    // just sits static showing its head (matching the marquee's pause-start
-    // position), which is how "only the marked section/row scrolls" is
-    // implemented. When marked, groupScrollMs (> 0) makes this row scroll
-    // in lockstep with sibling rows sharing the same cycle (e.g. every row
-    // in the currently-selected main-page section): they all start
-    // together and a shorter row holds at its revealed position until the
-    // group's longest row finishes, so the whole group loops back together.
-    // Pass groupScrollMs <= 0 for an ungrouped/solo row (e.g. the single
-    // selected row on an "All <Section>" page), which paces off its own
-    // distance instead. nowMs should be the same System.getTimer() value
-    // for every row drawn in one frame/group, so they stay in sync.
-    //
-    // clipTop/clipHeight describe the (full-width) clip rectangle already
-    // active on dc — needed so the tighter clip this uses to keep scrolled
-    // text from bleeding outside its band can be restored correctly
-    // afterward. Pass null/null if no clip is active (restored via
-    // dc.clearClip()).
-    function drawScrollingText(dc as Graphics.Dc, text as Lang.String, font as Graphics.FontDefinition, areaLeft as Lang.Number, areaWidth as Lang.Number, lineY as Lang.Number, w as Lang.Number, fitJustify as Lang.Number, clipTop as Lang.Number?, clipHeight as Lang.Number?, marked as Lang.Boolean, nowMs as Lang.Number, groupScrollMs as Lang.Number) as Void {
+    // ctx bundles marked/nowMs/groupScrollMs/clipTop/clipHeight — see
+    // ScrollCtx.
+    function drawScrollingText(dc as Graphics.Dc, text as Lang.String, font as Graphics.FontDefinition, areaLeft as Lang.Number, areaWidth as Lang.Number, lineY as Lang.Number, w as Lang.Number, fitJustify as Lang.Number, ctx as ScrollCtx) as Void {
         var vjustify  = Graphics.TEXT_JUSTIFY_VCENTER;
         var textWidth = dc.getTextWidthInPixels(text, font);
 
@@ -162,10 +176,10 @@ module BadgeFormat {
         var distance = textWidth - areaWidth;
         var x = areaLeft;
 
-        if (marked) {
-            var scrollMs = (groupScrollMs > 0) ? groupScrollMs : (distance / SCROLL_SPEED_PX_PER_SEC * 1000).toNumber();
+        if (ctx.marked) {
+            var scrollMs = (ctx.groupScrollMs > 0) ? ctx.groupScrollMs : (distance / SCROLL_SPEED_PX_PER_SEC * 1000).toNumber();
             var cycleMs  = SCROLL_PAUSE_START_MS + scrollMs + SCROLL_PAUSE_END_MS;
-            var phase    = nowMs % cycleMs;
+            var phase    = ctx.nowMs % cycleMs;
 
             if (phase < SCROLL_PAUSE_START_MS) {
                 x = areaLeft;
@@ -183,6 +197,8 @@ module BadgeFormat {
 
         var bandTop    = lineY - dc.getFontHeight(font) / 2 - 2;
         var bandBottom = lineY + dc.getFontHeight(font) / 2 + 2;
+        var clipTop    = ctx.clipTop;
+        var clipHeight = ctx.clipHeight;
         if (clipTop != null && clipHeight != null) {
             var outerTop    = clipTop as Lang.Number;
             var outerBottom = outerTop + (clipHeight as Lang.Number);
@@ -345,9 +361,8 @@ module BadgeFormat {
     // Draws the days-behind/ahead indicator (right) and the scrolling
     // "name + nameSuffix" (left) on one line at lineY. Returns the
     // days-indicator color, which drawChallengeRow reuses for its progress
-    // bar fill. clipTop/clipHeight/marked/nowMs/groupScrollMs: see
-    // drawScrollingText().
-    function drawNameAndDaysLine(dc as Graphics.Dc, badge as Lang.Dictionary, lineY as Lang.Number, barLeft as Lang.Number, barRight as Lang.Number, w as Lang.Number, nameSuffix as Lang.String, clipTop as Lang.Number?, clipHeight as Lang.Number?, marked as Lang.Boolean, nowMs as Lang.Number, groupScrollMs as Lang.Number) as Lang.Number {
+    // bar fill. ctx: see ScrollCtx.
+    function drawNameAndDaysLine(dc as Graphics.Dc, badge as Lang.Dictionary, lineY as Lang.Number, barLeft as Lang.Number, barRight as Lang.Number, w as Lang.Number, nameSuffix as Lang.String, ctx as ScrollCtx) as Lang.Number {
         var daysBehindVal = toFloatVal(badge.get("days_behind"), 0.0);
 
         // Days ahead/behind schedule (right)
@@ -369,7 +384,7 @@ module BadgeFormat {
         var nameMaxWidth  = parts[1] as Lang.Number;
         dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
         drawScrollingText(dc, nameText, glanceFont(), barLeft, nameMaxWidth, lineY, w,
-            Graphics.TEXT_JUSTIFY_LEFT, clipTop, clipHeight, marked, nowMs, groupScrollMs);
+            Graphics.TEXT_JUSTIFY_LEFT, ctx);
 
         return daysColor;
     }
@@ -377,11 +392,10 @@ module BadgeFormat {
     // Draws a compact one-line row (name [+ nameSuffix] on the left,
     // days-behind/ahead indicator on the right), vertically centered within
     // rowHeight. Used for the ENDING SOON and CHALLENGES sections on the main
-    // page. clipTop/clipHeight/marked/nowMs/groupScrollMs: see
-    // drawScrollingText().
-    function drawCompactRow(dc as Graphics.Dc, badge as Lang.Dictionary, rowTop as Lang.Number, rowHeight as Lang.Number, w as Lang.Number, nameSuffix as Lang.String, clipTop as Lang.Number?, clipHeight as Lang.Number?, marked as Lang.Boolean, nowMs as Lang.Number, groupScrollMs as Lang.Number) as Void {
+    // page. ctx: see ScrollCtx.
+    function drawCompactRow(dc as Graphics.Dc, badge as Lang.Dictionary, rowTop as Lang.Number, rowHeight as Lang.Number, w as Lang.Number, nameSuffix as Lang.String, ctx as ScrollCtx) as Void {
         var lineY = (rowTop + rowHeight / 2).toNumber();
-        drawNameAndDaysLine(dc, badge, lineY, (w * 0.12).toNumber(), (w * 0.88).toNumber(), w, nameSuffix, clipTop, clipHeight, marked, nowMs, groupScrollMs);
+        drawNameAndDaysLine(dc, badge, lineY, (w * 0.12).toNumber(), (w * 0.88).toNumber(), w, nameSuffix, ctx);
     }
 
     // The scrolling text, its available width/left edge, and fit-justify for
@@ -412,8 +426,8 @@ module BadgeFormat {
     // (right), vertically centered at rowY. On round/semi-round screens,
     // falls back to a single centered line (name + due date) so rows near
     // the top/bottom of the screen don't run under the bezel.
-    // clipTop/clipHeight/marked/nowMs/groupScrollMs: see drawScrollingText().
-    function drawUpcomingRow(dc as Graphics.Dc, badge as Lang.Dictionary, rowY as Lang.Number, w as Lang.Number, h as Lang.Number, clipTop as Lang.Number?, clipHeight as Lang.Number?, marked as Lang.Boolean, nowMs as Lang.Number, groupScrollMs as Lang.Number) as Void {
+    // ctx: see ScrollCtx.
+    function drawUpcomingRow(dc as Graphics.Dc, badge as Lang.Dictionary, rowY as Lang.Number, w as Lang.Number, h as Lang.Number, ctx as ScrollCtx) as Void {
         var due       = badge.get("days_until");
         var dueVal    = (due != null) ? due as Lang.Number : 0;
         var isToday   = (dueVal == 0);
@@ -432,7 +446,7 @@ module BadgeFormat {
             // future start_date.
             dc.setColor(textColor, Graphics.COLOR_TRANSPARENT);
             drawScrollingText(dc, text, glanceFont(), areaLeft, areaWidth, rowY, w,
-                fitJustify, clipTop, clipHeight, marked, nowMs, groupScrollMs);
+                fitJustify, ctx);
             return;
         }
 
@@ -446,7 +460,7 @@ module BadgeFormat {
 
         dc.setColor(textColor, Graphics.COLOR_TRANSPARENT);
         drawScrollingText(dc, text, glanceFont(), areaLeft, areaWidth, rowY, w,
-            fitJustify, clipTop, clipHeight, marked, nowMs, groupScrollMs);
+            fitJustify, ctx);
     }
 
     // Draws a section title (e.g. "UPCOMING") centered at fractional height y.
@@ -466,7 +480,7 @@ module BadgeFormat {
     // Draws one challenge row (name, days-offset, and progress bar/fraction or
     // "No target") at the given top y-coordinate. Shared by the main page and
     // the all-challenges/all-ending-soon pages, which use identical row layouts.
-    function drawChallengeRow(dc as Graphics.Dc, badge as Lang.Dictionary, rowTop as Lang.Number, w as Lang.Number, h as Lang.Number, justify as Lang.Number, clipTop as Lang.Number?, clipHeight as Lang.Number?, marked as Lang.Boolean, nowMs as Lang.Number) as Void {
+    function drawChallengeRow(dc as Graphics.Dc, badge as Lang.Dictionary, rowTop as Lang.Number, w as Lang.Number, h as Lang.Number, justify as Lang.Number, ctx as ScrollCtx) as Void {
         var cx = w / 2;
 
         var barLeft   = (w * 0.12).toNumber();
@@ -492,7 +506,7 @@ module BadgeFormat {
         }
 
         var nameY = (rowTop + h * 0.045).toNumber();
-        var daysColor = drawNameAndDaysLine(dc, badge, nameY, barLeft, barRight, w, "", clipTop, clipHeight, marked, nowMs, 0);
+        var daysColor = drawNameAndDaysLine(dc, badge, nameY, barLeft, barRight, w, "", ctx);
 
         if (hasTarget) {
             // Progress bar background

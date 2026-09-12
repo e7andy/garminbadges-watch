@@ -94,7 +94,7 @@ class GarminBadgesAllUpcomingView extends ScrollableView {
 
             var badge = _upcoming[i] as Lang.Dictionary;
             var rowY  = rowTop + rowHeightPx / 2;
-            BadgeFormat.drawUpcomingRow(dc, badge, rowY, w, h, viewportTop, viewportHeight, marked, nowMs, 0);
+            BadgeFormat.drawUpcomingRow(dc, badge, rowY, w, h, new BadgeFormat.ScrollCtx(marked, nowMs, 0, viewportTop, viewportHeight));
         }
 
         dc.clearClip();

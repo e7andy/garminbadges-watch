@@ -89,7 +89,7 @@ class GarminBadgesAllChallengesView extends ScrollableView {
                 BadgeFormat.drawSelectionMarker(dc, rowTop, rowHeightPx, w);
             }
 
-            BadgeFormat.drawChallengeRow(dc, _challenges[i] as Lang.Dictionary, rowTop, w, h, justify, viewportTop, viewportHeight, marked, nowMs);
+            BadgeFormat.drawChallengeRow(dc, _challenges[i] as Lang.Dictionary, rowTop, w, h, justify, new BadgeFormat.ScrollCtx(marked, nowMs, 0, viewportTop, viewportHeight));
         }
 
         dc.clearClip();

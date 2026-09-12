@@ -302,7 +302,7 @@ class GarminBadgesView extends ScrollableView {
         for (var i = 0; i < count; i += 1) {
             var badge = _upcoming[i] as Lang.Dictionary;
             var rowY  = rowsTopPx + i * rowHeightPx + rowHeightPx / 2;
-            BadgeFormat.drawUpcomingRow(dc, badge, rowY, w, h, null, null, marked, nowMs, groupScrollMs);
+            BadgeFormat.drawUpcomingRow(dc, badge, rowY, w, h, new BadgeFormat.ScrollCtx(marked, nowMs, groupScrollMs, null, null));
         }
 
         _sectionIds.add(BadgeFormat.SECTION_UPCOMING);
@@ -359,7 +359,7 @@ class GarminBadgesView extends ScrollableView {
                 suffix = " " + BadgeFormat.formatEndsIn(daysUntilEndOf(badge));
             }
 
-            BadgeFormat.drawCompactRow(dc, badge, rowTop, rowHeightPx, w, suffix, null, null, marked, nowMs, groupScrollMs);
+            BadgeFormat.drawCompactRow(dc, badge, rowTop, rowHeightPx, w, suffix, new BadgeFormat.ScrollCtx(marked, nowMs, groupScrollMs, null, null));
         }
 
         _sectionIds.add(sectionId);
