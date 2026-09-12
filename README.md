@@ -6,8 +6,8 @@ A Garmin Connect IQ watch app that shows your [GarminBadges](https://garminbadge
 
 The main page has up to three sections, each hidden when it has nothing to show:
 
+- **Due Soon** — up to 3 in-progress challenges ending within the next 7 days (including overdue ones), soonest first, each showing "Ends Nd"/"Ends today" plus a days-ahead/behind indicator.
 - **Next Badges** — up to 3 badges starting within the next 7 days, with a "Nd" countdown.
-- **Ending Soon** — up to 3 in-progress challenges ending within the next 7 days (including overdue ones), soonest first, each showing "Ends Nd"/"Ends today" plus a days-ahead/behind indicator.
 - **Challenges** — your most urgent in-progress challenges (up to 5), ranked by how many days behind schedule you are, each with a days-ahead/behind indicator.
 
 Long badge names that don't fit are shown as a page-flip ticker.

@@ -74,8 +74,8 @@ Until the app is published, sideloaded builds can't show a Settings screen in Ga
 
   > Track your [garminbadges.com](https://garminbadges.com) challenge progress right from your wrist.
   >
-  > - NEXT BADGES gives you a heads-up on badges starting within 7 days.
   > - DUE SOON surfaces your in-progress challenges that wrap up within a week, soonest first, each with an ahead/behind-schedule indicator.
+  > - NEXT BADGES gives you a heads-up on badges starting within 7 days.
   > - CHALLENGES lists your most urgent in-progress challenges, ranked by how far ahead or behind schedule you are, each with a live progress bar (e.g. 7/10 km).
   > - Select or tap any row for full details: progress, percentage, schedule status, and duration.
   > - A glance widget on your watch face loop shows your next badge or most urgent challenge with a progress bar, plus how many challenges are ending soon and how many you're behind on.
