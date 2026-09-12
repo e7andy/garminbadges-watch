@@ -250,11 +250,11 @@ class GarminBadgesView extends ScrollableView {
 
         var currentY = TOP_MARGIN_FRAC;
 
-        if (upCount > 0) {
-            currentY = drawUpcomingSection(dc, w, h, currentY, upCount);
-        }
         if (endCount > 0) {
             currentY = drawCompactSection(dc, w, h, currentY, "ENDING SOON", _endingSoon, endCount, BadgeFormat.SECTION_ENDING_SOON, true);
+        }
+        if (upCount > 0) {
+            currentY = drawUpcomingSection(dc, w, h, currentY, upCount);
         }
         if (chalCount > 0) {
             currentY = drawCompactSection(dc, w, h, currentY, "CHALLENGES", _challenges, chalCount, BadgeFormat.SECTION_CHALLENGES, false);

@@ -178,15 +178,15 @@ Some challenges (e.g. "finish in the top 3" podium challenges) have no numeric t
 
 The main page has three sections, each hidden entirely when its item list is empty:
 
-- **NEXT BADGES** — up to 3 `upcoming` badges (centered rows, name + `formatDaysUntil(days_until)`). `BadgeFormat.drawUpcomingRow()` highlights `days_until == 0` rows in red — plain (non-Challenges-category) badges that started within the last 24 hours ("active today").
 - **ENDING SOON** — up to 3 started `challenges` (`started == true`) whose `days_until_end <= 7` (including overdue), sorted soonest-ending first via `GarminBadgesView.computeEndingSoon()`. Not-yet-started challenges are excluded even if their end date falls within 7 days — e.g. a 3-day challenge starting Friday and ending Sunday only appears here from Friday. Compact rows: name + "Ends Nd"/"Ends today" on the left, the `days_behind` indicator on the right.
+- **NEXT BADGES** — up to 3 `upcoming` badges (centered rows, name + `formatDaysUntil(days_until)`). `BadgeFormat.drawUpcomingRow()` highlights `days_until == 0` rows in red — plain (non-Challenges-category) badges that started within the last 24 hours ("active today").
 - **CHALLENGES** — up to 5 `challenges` (existing most-behind-first sort). Compact rows: name + the `days_behind` indicator only, no progress bar.
 
 Each compact row's `days_behind` indicator is "+Nd"/"-Nd"/"0d" (red/green/gray).
 
 ## Navigation & selection
 
-The main page (`GarminBadgesView`) has section-level UP/DOWN selection across its three sections (NEXT BADGES / ENDING SOON / CHALLENGES, in `BadgeFormat.SECTION_UPCOMING/SECTION_ENDING_SOON/SECTION_CHALLENGES`) — not individual rows:
+The main page (`GarminBadgesView`) has section-level UP/DOWN selection across its three sections (ENDING SOON / NEXT BADGES / CHALLENGES, in `BadgeFormat.SECTION_UPCOMING/SECTION_ENDING_SOON/SECTION_CHALLENGES`) — not individual rows:
 
 - Each `onUpdate()` rebuilds `_sectionIds`/`_sectionTops`/`_sectionBottoms` (parallel arrays — visible section ids in display order, and the pixel y-bounds of each section's row block), skipping any section whose item list is empty.
 - `_selectedSectionIdx` indexes into `_sectionIds`. `GarminBadgesDelegate.onNextPage()`/`onPreviousPage()` (DOWN/UP) call `view.moveSelection(±1)`, which clamps `_selectedSectionIdx` to `[0, _sectionIds.size() - 1]`.
