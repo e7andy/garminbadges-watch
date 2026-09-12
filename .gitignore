@@ -1,1 +1,5 @@
 bin/
+gen/
+internal-mir/
+external-mir/
+binBadgeTracker*
