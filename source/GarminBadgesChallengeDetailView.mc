@@ -28,8 +28,7 @@ class GarminBadgesChallengeDetailView extends WatchUi.View {
 
         var justify = Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER;
 
-        var name    = _badge.get("name");
-        var nameStr = (name != null) ? name as Lang.String : "";
+        var nameStr = BadgeFormat.badgeName(_badge);
 
         var progressVal   = BadgeFormat.toFloatVal(_badge.get("progress_value"), 0.0);
         var targetVal     = BadgeFormat.toFloatVal(_badge.get("target_value"), 0.0);

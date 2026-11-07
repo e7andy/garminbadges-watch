@@ -165,8 +165,7 @@ class GarminBadgesGlanceView extends WatchUi.GlanceView {
             applyChallenge(endingSoon, " " + BadgeFormat.formatEndsIn(daysUntilEndOf(endingSoon)));
         } else if (upcoming.size() > 0) {
             var u = upcoming[0] as Lang.Dictionary;
-            var name = u.get("name");
-            var nameStr = (name != null) ? name as Lang.String : "";
+            var nameStr = BadgeFormat.badgeName(u);
 
             var daysUntil = u.get("days_until");
             var daysUntilVal = (daysUntil != null) ? daysUntil as Lang.Number : 0;
@@ -228,8 +227,7 @@ class GarminBadgesGlanceView extends WatchUi.GlanceView {
     // Sets _title (name + titleSuffix), _hasTarget, _ratio, and _barColor
     // from a challenge dictionary.
     private function applyChallenge(c as Lang.Dictionary, titleSuffix as Lang.String) as Void {
-        var name = c.get("name");
-        var nameStr = (name != null) ? name as Lang.String : "";
+        var nameStr = BadgeFormat.badgeName(c);
         _title = nameStr + titleSuffix;
 
         var targetVal = BadgeFormat.toFloatVal(c.get("target_value"), 0.0);

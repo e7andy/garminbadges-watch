@@ -343,9 +343,51 @@ module BadgeFormat {
         return h.format("%02d") + ":" + m.format("%02d") + ":" + s.format("%02d");
     }
 
+    // The badge's display name, with month names abbreviated.
     function badgeName(badge as Lang.Dictionary) as Lang.String {
         var name = badge.get("name");
-        return (name != null) ? name as Lang.String : "";
+        return (name != null) ? abbreviateMonths(name as Lang.String) : "";
+    }
+
+    const MONTHS_LONG = ["january", "february", "march", "april", "june", "july",
+        "august", "september", "october", "november", "december"];
+    const MONTHS_SHORT = ["Jan", "Feb", "Mar", "Apr", "Jun", "Jul",
+        "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+    // Abbreviates full month names in text ("March Challenge" -> "Mar
+    // Challenge") to save space on small screens. "May" is already short.
+    // Trailing punctuation on a word ("March:") is preserved.
+    function abbreviateMonths(text as Lang.String) as Lang.String {
+        var words  = splitWords(text);
+        var result = "";
+
+        for (var i = 0; i < words.size(); i += 1) {
+            var word = words[i] as Lang.String;
+
+            var coreLen = word.length();
+            while (coreLen > 0) {
+                var ch = word.substring(coreLen - 1, coreLen) as Lang.String;
+                if (ch.equals(",") || ch.equals(".") || ch.equals(":") || ch.equals(";") || ch.equals(")")) {
+                    coreLen -= 1;
+                } else {
+                    break;
+                }
+            }
+
+            var core = word.substring(0, coreLen) as Lang.String;
+            var idx  = MONTHS_LONG.indexOf(core.toLower());
+            if (idx >= 0) {
+                var abbr = MONTHS_SHORT[idx] as Lang.String;
+                if (coreLen > 1 && core.equals(core.toUpper())) {
+                    abbr = abbr.toUpper();
+                }
+                word = abbr + word.substring(coreLen, word.length());
+            }
+
+            result = (i == 0) ? word : result + " " + word;
+        }
+
+        return result;
     }
 
     // The scrolling name text and its available width for a compact/

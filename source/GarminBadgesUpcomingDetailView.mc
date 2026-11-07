@@ -27,8 +27,7 @@ class GarminBadgesUpcomingDetailView extends WatchUi.View {
 
         var justify = Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER;
 
-        var name    = _badge.get("name");
-        var nameStr = (name != null) ? name as Lang.String : "";
+        var nameStr = BadgeFormat.badgeName(_badge);
 
         var daysUntil    = _badge.get("days_until");
         var daysUntilVal = (daysUntil != null) ? daysUntil as Lang.Number : 0;
