@@ -172,6 +172,8 @@ May be empty.
 
 `id` is the badge's numeric primary key, used to build a `https://garminbadges.com/badges/{id}` link via `BadgeFormat.badgeUrl()` (see "Detail pages" below). Stale `BadgeCache` data from before this field existed won't have it — `badgeUrl()` returns `null` in that case, and the "View Online" menu item still shows but no-ops when selected, rather than the menu failing to open at all.
 
+**Stale cache aging**: the day counts are computed by the server at fetch time, so `BadgeCache.save()` also stores the save time (`watchSavedAt`) and `BadgeCache.load()` calls `advance()` to shift them by the whole days elapsed: `days_until_end`/`days_until` decrease, a not-yet-started challenge flips to `started` once `days_until_start` reaches 0, started challenges' `days_behind` grows by the elapsed days (capped at `duration_days`), and `upcoming` items whose start passed more than a day ago are dropped. Fresh responses are applied directly and need no adjustment.
+
 Some challenges (e.g. "finish in the top 3" podium challenges) have no numeric target — `target_value` is `0` and `unit_key` is `null` for these. The view skips the progress bar/fraction and shows "No target" instead.
 
 `progress_value`/`target_value` are in the badge's raw storage units (meters for `mi_km`, seconds for `seconds`) — formatting/unit conversion happens on-device in `formatFraction()`/`formatTime()`, not in the API. `days_behind` is a rounded integer; positive = behind schedule, negative = ahead, 0 = on track.
