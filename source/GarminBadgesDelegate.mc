@@ -104,6 +104,7 @@ class GarminBadgesDelegate extends ScrollDelegate {
     function onMenu() as Lang.Boolean {
         var menu = new WatchUi.Menu2({:title => "Menu"});
         menu.addItem(new WatchUi.MenuItem("Refresh", null, :refresh, {}));
+        menu.addItem(new WatchUi.MenuItem("Sync status", null, :syncStatus, {}));
         WatchUi.pushView(menu, new GarminBadgesMenuDelegate(_view), WatchUi.SLIDE_UP);
         return true;
     }

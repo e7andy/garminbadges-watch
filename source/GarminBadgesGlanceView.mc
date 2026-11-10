@@ -109,19 +109,24 @@ class GarminBadgesGlanceView extends WatchUi.GlanceView {
     function onReceive(responseCode as Lang.Number, data as Lang.Dictionary or Lang.String or PersistedContent.Iterator or Null) as Void {
         _loading = false;
 
+        var detail = null as Lang.String?;
         if (responseCode == 200 && data instanceof Lang.Dictionary) {
             var d = data as Lang.Dictionary;
-            BadgeCache.save(d);
-            applyData(d);
-        } else if (!_hasData) {
-            if (responseCode == 401) {
-                _error = "Invalid API key";
-            } else if (responseCode == -2) {
-                _error = "No internet";
-            } else {
-                _error = "Error " + responseCode.toString();
+            detail = BadgeCache.save(d);
+            try {
+                applyData(d);
+            } catch (ex) {
+                detail = "Apply: " + ex.getErrorMessage();
+            }
+        } else {
+            if (responseCode == 200) {
+                detail = "Body not JSON";
+            }
+            if (!_hasData) {
+                _error = BadgeFormat.describeCode(responseCode) + " " + responseCode.toString();
             }
         }
+        BadgeCache.recordResult("glance", responseCode, detail);
 
         WatchUi.requestUpdate();
     }

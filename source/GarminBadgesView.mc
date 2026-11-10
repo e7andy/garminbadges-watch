@@ -18,6 +18,9 @@ class GarminBadgesView extends ScrollableView {
     private var _hasData    as Lang.Boolean = false;
     private var _refreshing as Lang.Boolean = false;
     private var _error      as Lang.String  = "";
+    // Non-empty when the latest fetch failed (shown top-left while cached
+    // data is still on screen); details live on the "Sync status" screen.
+    private var _syncFailed as Lang.String  = "";
     private var _challenges as Lang.Array<Lang.Dictionary> = [];
     private var _upcoming   as Lang.Array<Lang.Dictionary> = [];
     private var _endingSoon as Lang.Array<Lang.Dictionary> = [];
@@ -88,21 +91,35 @@ class GarminBadgesView extends ScrollableView {
         _loading    = false;
         _refreshing = false;
 
+        var detail = null as Lang.String?;
         if (responseCode == 200 && data instanceof Lang.Dictionary) {
             var d = data as Lang.Dictionary;
-            BadgeCache.save(d);
-            applyData(d);
-        } else if (!_hasData) {
-            if (responseCode == 401) {
-                _error = "Invalid API key";
-            } else if (responseCode == -2) {
-                _error = "No internet";
-            } else {
-                _error = "Error " + responseCode.toString();
+            detail = BadgeCache.save(d);
+            try {
+                applyData(d);
+            } catch (ex) {
+                detail = "Apply: " + ex.getErrorMessage();
+            }
+            _syncFailed = "";
+            if (detail != null) {
+                _syncFailed = "Sync err";
+            }
+        } else {
+            if (responseCode == 200) {
+                detail = "Body not JSON";
+            }
+            _syncFailed = "Sync err " + responseCode.toString();
+            if (!_hasData) {
+                _error = BadgeFormat.describeCode(responseCode) + "\n(" + responseCode.toString() + ")";
             }
         }
+        BadgeCache.recordResult("app", responseCode, detail);
 
         WatchUi.requestUpdate();
+    }
+
+    function newStatusView() as GarminBadgesStatusView {
+        return new GarminBadgesStatusView(_challenges.size(), _upcoming.size());
     }
 
     // Applies a /api/watch response (fresh or cached) to the view state.
@@ -194,6 +211,11 @@ class GarminBadgesView extends ScrollableView {
             dc.setColor(BadgeFormat.GRAY, Graphics.COLOR_TRANSPARENT);
             dc.drawText(iconBounds[1], iconBounds[1] + iconBounds[2] / 2, BadgeFormat.glanceFont(),
                 "Refreshing...", Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
+        } else if (!_syncFailed.equals("")) {
+            var iconBounds = BadgeFormat.menuIconBounds(w, h);
+            dc.setColor(BadgeFormat.RED, Graphics.COLOR_TRANSPARENT);
+            dc.drawText(iconBounds[1], iconBounds[1] + iconBounds[2] / 2, BadgeFormat.glanceFont(),
+                _syncFailed, Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
         }
 
         if (_loading) {

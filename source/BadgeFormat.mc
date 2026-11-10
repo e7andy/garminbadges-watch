@@ -343,6 +343,37 @@ module BadgeFormat {
         return h.format("%02d") + ":" + m.format("%02d") + ":" + s.format("%02d");
     }
 
+    // Short human-readable meaning of a makeWebRequest response code.
+    function describeCode(code as Lang.Number) as Lang.String {
+        if (code == 200) { return "OK"; }
+        if (code == 401) { return "Invalid API key"; }
+        if (code == 403) { return "Forbidden"; }
+        if (code == 404) { return "Not found"; }
+        if (code >= 500) { return "Server error"; }
+        if (code == -1)    { return "Bluetooth error"; }
+        if (code == -2)    { return "Phone timed out"; }
+        if (code == -3)    { return "Server timed out"; }
+        if (code == -4)    { return "No data"; }
+        if (code == -5)    { return "Cancelled"; }
+        if (code == -104)  { return "Phone not connected"; }
+        if (code == -300)  { return "Request timed out"; }
+        if (code == -400)  { return "Bad response body"; }
+        if (code == -402)  { return "Response too large"; }
+        if (code == -403)  { return "Out of memory"; }
+        if (code == -1000) { return "Storage full"; }
+        if (code == -1001) { return "HTTPS required"; }
+        if (code == -1002) { return "Bad content type"; }
+        return "Error";
+    }
+
+    // "just now" / "5m ago" / "3h ago" / "2d ago" for an age in seconds.
+    function formatAge(seconds as Lang.Number) as Lang.String {
+        if (seconds < 60)    { return "just now"; }
+        if (seconds < 3600)  { return (seconds / 60) + "m ago"; }
+        if (seconds < 86400) { return (seconds / 3600) + "h ago"; }
+        return (seconds / 86400) + "d ago";
+    }
+
     // The badge's display name, with month names abbreviated.
     function badgeName(badge as Lang.Dictionary) as Lang.String {
         var name = badge.get("name");

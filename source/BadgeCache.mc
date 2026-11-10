@@ -35,9 +35,47 @@ module BadgeCache {
         return d;
     }
 
-    function save(data as Lang.Dictionary) as Void {
-        Storage.setValue(KEY, data);
-        Storage.setValue(SAVED_AT_KEY, Time.now().value());
+    // Returns null on success, or the exception message if storing failed
+    // (e.g. storage full) so the caller can still show the fresh data and
+    // record why it won't survive a restart.
+    function save(data as Lang.Dictionary) as Lang.String? {
+        try {
+            Storage.setValue(KEY, data);
+            Storage.setValue(SAVED_AT_KEY, Time.now().value());
+        } catch (ex) {
+            return "Cache: " + ex.getErrorMessage();
+        }
+        return null;
+    }
+
+    const STATUS_KEY = "syncStatus";
+
+    // Records the outcome of the latest fetch (from the app or the glance)
+    // for the "Sync status" screen. "ok" is the sync's result; "okAt" keeps
+    // the time of the last fully successful one across failures.
+    function recordResult(source as Lang.String, code as Lang.Number, detail as Lang.String?) as Void {
+        try {
+            var now = Time.now().value();
+            var prev = Storage.getValue(STATUS_KEY);
+            var okAt = null;
+            if (prev instanceof Lang.Dictionary) {
+                okAt = (prev as Lang.Dictionary).get("okAt");
+            }
+            var ok = (code == 200 && detail == null);
+            if (ok) {
+                okAt = now;
+            }
+            Storage.setValue(STATUS_KEY, {
+                "at" => now, "src" => source, "code" => code, "detail" => detail, "ok" => ok, "okAt" => okAt
+            });
+        } catch (ex) {
+            // Diagnostics must never break the fetch itself.
+        }
+    }
+
+    function status() as Lang.Dictionary? {
+        var s = Storage.getValue(STATUS_KEY);
+        return (s instanceof Lang.Dictionary) ? s as Lang.Dictionary : null;
     }
 
     // Shifts the server-computed day counts forward by `days` whole days.
