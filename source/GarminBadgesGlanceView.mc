@@ -136,7 +136,7 @@ class GarminBadgesGlanceView extends WatchUi.GlanceView {
         var challenges = [] as Lang.Array<Lang.Dictionary>;
         var ch = d.get("challenges");
         if (ch instanceof Lang.Array) {
-            challenges = ch as Lang.Array<Lang.Dictionary>;
+            challenges = BadgeFormat.dedupeById(ch as Lang.Array<Lang.Dictionary>);
         }
 
         var upcoming = [] as Lang.Array<Lang.Dictionary>;
