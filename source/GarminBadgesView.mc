@@ -137,7 +137,7 @@ class GarminBadgesView extends ScrollableView {
 
         var ch = d.get("challenges");
         if (ch instanceof Lang.Array) {
-            _challenges = filterByDuration(BadgeFormat.dedupeById(ch as Lang.Array<Lang.Dictionary>), maxDuration);
+            _challenges = filterByDuration(ch as Lang.Array<Lang.Dictionary>, maxDuration);
         } else {
             _challenges = [];
         }

@@ -223,36 +223,6 @@ module BadgeFormat {
         }
     }
 
-    // The API can return several rows for the same badge id (e.g. one per
-    // earned_number of a repeatable badge), each with different progress.
-    // Keeps one entry per id — the one with the most progress, in the position
-    // of its first occurrence. Items without an id are kept as-is.
-    function dedupeById(items as Lang.Array<Lang.Dictionary>) as Lang.Array<Lang.Dictionary> {
-        var result = [] as Lang.Array<Lang.Dictionary>;
-        for (var i = 0; i < items.size(); i += 1) {
-            var item = items[i] as Lang.Dictionary;
-            var id = item.get("id");
-            var dupIdx = -1;
-            if (id != null) {
-                for (var j = 0; j < result.size(); j += 1) {
-                    if (id == (result[j] as Lang.Dictionary).get("id")) {
-                        dupIdx = j;
-                        break;
-                    }
-                }
-            }
-            if (dupIdx < 0) {
-                result.add(item);
-            } else {
-                var existing = result[dupIdx] as Lang.Dictionary;
-                if (toFloatVal(item.get("progress_value"), 0.0) > toFloatVal(existing.get("progress_value"), 0.0)) {
-                    result[dupIdx] = item;
-                }
-            }
-        }
-        return result;
-    }
-
     // JSON numbers without a fractional part decode as Lang.Number, and some
     // decimals decode as Lang.Double rather than Lang.Float — convert
     // explicitly so arithmetic doesn't truncate or fall through to default.
